@@ -126,7 +126,18 @@ function updateLobbyStatus(playerCount, playerNames) {
         startGameBtn.disabled = false;
     }
     
-    document.getElementById('lobbyStatus').innerHTML = message;
+    const lobbyStatus = document.getElementById('lobbyStatus');
+    
+    // Get all existing notifications before clearing
+    const notifications = Array.from(lobbyStatus.querySelectorAll('.player-join-notification'));
+    
+    // Clear everything
+    lobbyStatus.innerHTML = message;
+    
+    // Re-add notifications at the beginning
+    notifications.forEach(notification => {
+        lobbyStatus.prepend(notification);
+    });
 }
 
 function showLobbyStatus(message) {
