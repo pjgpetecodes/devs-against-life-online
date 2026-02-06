@@ -108,6 +108,17 @@
             box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
         }
 
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
         /* Game Board Styles */
         #gameBoard {
             display: none;
@@ -377,7 +388,8 @@
                 <label for="roomId">Room ID:</label>
                 <input type="text" id="roomId" placeholder="Enter or create room ID" />
             </div>
-            <button class="btn-primary" onclick="joinRoom()">Join Room</button>
+            <button id="joinRoomBtn" class="btn-primary" onclick="joinRoom()">Join Room</button>
+            <button id="leaveRoomBtn" class="btn-danger hidden" onclick="leaveRoom()">Leave Room</button>
             <button id="startGameBtn" class="btn-secondary" onclick="startGame()" disabled>Start Game</button>
             <div id="lobbyStatus" style="margin-top: 20px; text-align: center;"></div>
         </div>

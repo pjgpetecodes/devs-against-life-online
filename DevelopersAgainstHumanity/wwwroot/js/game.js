@@ -8,6 +8,7 @@ let currentPlayer = {
 };
 let gameState = null;
 let roundNumber = 1;
+let hasJoinedRoom = false;
 
 // Constants
 const MIN_PLAYERS_TO_START = 3;
@@ -172,10 +173,57 @@ async function joinRoom() {
 
     try {
         await connection.invoke("JoinRoom", roomId, playerName);
+        // Mark as joined and disable controls
+        hasJoinedRoom = true;
+        disableJoinControls();
         // The PlayerJoined event will handle updating the lobby status and button
     } catch (err) {
         console.error("Error joining room:", err);
         showError("Failed to join room");
+    }
+}
+
+function disableJoinControls() {
+    document.getElementById('playerName').disabled = true;
+    document.getElementById('roomId').disabled = true;
+    document.getElementById('joinRoomBtn').disabled = true;
+    document.getElementById('leaveRoomBtn').classList.remove('hidden');
+}
+
+function enableJoinControls() {
+    document.getElementById('playerName').disabled = false;
+    document.getElementById('roomId').disabled = false;
+    document.getElementById('joinRoomBtn').disabled = false;
+    document.getElementById('leaveRoomBtn').classList.add('hidden');
+}
+
+async function leaveRoom() {
+    // Reset state
+    hasJoinedRoom = false;
+    currentRoomId = '';
+    currentPlayer = {
+        hand: [],
+        isCardCzar: false,
+        selectedCard: null
+    };
+    gameState = null;
+    roundNumber = 1;
+    
+    // Re-enable controls
+    enableJoinControls();
+    
+    // Clear lobby status
+    document.getElementById('lobbyStatus').innerHTML = '';
+    document.getElementById('startGameBtn').disabled = true;
+    
+    // Reconnect to clear server-side state
+    try {
+        await connection.stop();
+        await connection.start();
+        console.log("Reconnected after leaving room");
+    } catch (err) {
+        console.error("Error reconnecting:", err);
+        showError("Failed to reconnect. Please refresh the page to continue.");
     }
 }
 
