@@ -15,11 +15,11 @@ public class GameHub : Hub
         _logger = logger;
     }
 
-    public async Task CreateRoom(string roomId)
+    public async Task CreateRoom(string roomId, int? totalRounds = null)
     {
         try
         {
-            _gameService.CreateRoom(roomId);
+            _gameService.CreateRoom(roomId, totalRounds);
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
             await Clients.Caller.SendAsync("RoomCreated", roomId);
             _logger.LogInformation($"Room {roomId} created by {Context.ConnectionId}");
@@ -27,6 +27,34 @@ public class GameHub : Hub
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating room");
+            await Clients.Caller.SendAsync("Error", ex.Message);
+        }
+    }
+
+    public async Task UpdateRounds(string roomId, int totalRounds)
+    {
+        try
+        {
+            var room = _gameService.GetRoom(roomId);
+            if (room == null)
+                throw new InvalidOperationException("Room not found");
+
+            if (room.CreatorConnectionId != Context.ConnectionId)
+                throw new InvalidOperationException("Only room creator can set rounds");
+
+            if (room.State != GameState.Lobby)
+                throw new InvalidOperationException("Cannot change rounds after game started");
+
+            if (totalRounds < 1)
+                throw new InvalidOperationException("Must have at least 1 round");
+
+            room.TotalRounds = totalRounds;
+            await Clients.Group(roomId).SendAsync("GameStateUpdated", room);
+            _logger.LogInformation($"Rounds updated to {totalRounds} in room {roomId}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating rounds");
             await Clients.Caller.SendAsync("Error", ex.Message);
         }
     }

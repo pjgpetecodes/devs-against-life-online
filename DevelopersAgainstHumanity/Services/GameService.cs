@@ -4,7 +4,7 @@ namespace DevelopersAgainstHumanity.Services;
 
 public interface IGameService
 {
-    GameRoom CreateRoom(string roomId);
+    GameRoom CreateRoom(string roomId, int? totalRounds = null);
     GameRoom? GetRoom(string roomId);
     Player AddPlayer(string roomId, string connectionId, string playerName);
     void RemovePlayer(string roomId, string connectionId);
@@ -27,16 +27,21 @@ public class GameService : IGameService
         _logger = logger;
     }
 
-    public GameRoom CreateRoom(string roomId)
+    public GameRoom CreateRoom(string roomId, int? totalRounds = null)
     {
         if (_rooms.ContainsKey(roomId))
         {
             return _rooms[roomId];
         }
 
-        var room = new GameRoom { RoomId = roomId };
+        var room = new GameRoom { RoomId = roomId, CreatorConnectionId = null };
+        if (totalRounds.HasValue && totalRounds.Value > 0)
+        {
+            room.TotalRounds = totalRounds.Value;
+        }
+
         _rooms[roomId] = room;
-        _logger.LogInformation($"Created room {roomId}");
+        _logger.LogInformation($"Created room {roomId} with {room.TotalRounds} rounds");
         return room;
     }
 
@@ -56,6 +61,12 @@ public class GameService : IGameService
 
         if (room.Players.Any(p => p.ConnectionId == connectionId))
             throw new InvalidOperationException("Player already in room");
+
+        // First player to join is the room creator
+        if (room.CreatorConnectionId == null)
+        {
+            room.CreatorConnectionId = connectionId;
+        }
 
         var player = new Player
         {
@@ -106,11 +117,13 @@ public class GameService : IGameService
 
         room.State = GameState.Playing;
         room.CurrentCzarIndex = 0;
+        room.CurrentRound = 1;
         
         // Deal cards to all players
         foreach (var player in room.Players)
         {
             player.Score = 0;
+            player.SelectedCardIds.Clear();
             DealCards(player, 10);
         }
 
@@ -254,8 +267,32 @@ public class GameService : IGameService
             }
         }
 
+        // Check if game should end
+        if (room.CurrentRound >= room.TotalRounds)
+        {
+            var topScore = room.Players.Max(p => p.Score);
+            var topPlayers = room.Players.Where(p => p.Score == topScore).ToList();
+
+            // If there's a tie, play a decider round
+            if (topPlayers.Count > 1)
+            {
+                room.IsDeciderRound = true;
+                room.CurrentRound++;
+                room.CurrentCzarIndex++;
+                StartRound(room);
+                return;
+            }
+
+            // No tie, game is over
+            room.WinningPlayerId = topPlayers[0].ConnectionId;
+            room.State = GameState.GameOver;
+            return;
+        }
+
         // Next card czar
         room.CurrentCzarIndex++;
+        room.CurrentRound++;
+        room.IsDeciderRound = false;
         
         StartRound(room);
     }

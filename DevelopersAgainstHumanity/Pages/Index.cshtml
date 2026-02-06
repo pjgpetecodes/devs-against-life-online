@@ -419,6 +419,16 @@
             <button id="leaveRoomBtn" class="btn-danger hidden" onclick="leaveRoom()">Leave Room</button>
             <button id="startGameBtn" class="btn-secondary" onclick="startGame()" disabled>Start Game</button>
             <div id="lobbyStatus" style="margin-top: 20px; text-align: center;"></div>
+
+            <!-- Rounds selector (only for room creator in lobby) -->
+            <div id="roundsSelector" class="hidden" style="margin-top: 20px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+                <h3>Set Number of Rounds</h3>
+                <div class="input-group">
+                    <label for="lobbyRounds">Rounds to play:</label>
+                    <input type="number" id="lobbyRounds" min="1" max="50" value="7" />
+                </div>
+                <button id="setRoundsBtn" class="btn-primary" onclick="setRounds()" style="margin-top: 10px;">Set Rounds</button>
+            </div>
         </div>
 
         <!-- Game Board -->
@@ -429,7 +439,7 @@
                     Room: <span id="roomIdDisplay"></span>
                 </div>
                 <div class="game-info">
-                    Round: <span id="roundNumber">1</span>
+                    <span id="roundLabel">Round: <span id="roundNumber">1</span> / <span id="totalRoundsDisplay">7</span></span>
                 </div>
             </div>
 

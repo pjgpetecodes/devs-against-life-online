@@ -1,6 +1,8 @@
 // Game State
 let connection;
 let currentRoomId = '';
+let currentConnectionId = '';
+let roomCreatorId = '';
 let currentPlayer = {
     hand: [],
     isCardCzar: false,
@@ -9,6 +11,7 @@ let currentPlayer = {
 };
 let gameState = null;
 let roundNumber = 1;
+let totalRounds = 7;
 let hasJoinedRoom = false;
 
 // Constants
@@ -42,6 +45,21 @@ async function initializeConnection() {
     connection.on("GameStateUpdated", (state) => {
         console.log("Game state updated:", state);
         gameState = state;
+
+        if (typeof state.currentRound === 'number') {
+            roundNumber = state.currentRound;
+        }
+
+        if (typeof state.totalRounds === 'number') {
+            totalRounds = state.totalRounds;
+        }
+
+        if (state.creatorConnectionId) {
+            roomCreatorId = state.creatorConnectionId;
+            showRoundsSelector();
+        }
+
+        updateRoundDisplay();
         
         // Update lobby status if still in lobby
         if (state.state === 0) { // GameState.Lobby
@@ -77,12 +95,11 @@ async function initializeConnection() {
 
     connection.on("RoundStarted", () => {
         console.log("Round started");
-        roundNumber++;
-        document.getElementById('roundNumber').textContent = roundNumber;
         currentPlayer.selectedCards = [];
         currentPlayer.hasSubmitted = false;
         hideWinnerDisplay();
         hideNextRoundButton();
+        updateRoundDisplay();
     });
 
     connection.on("Error", (message) => {
@@ -94,6 +111,7 @@ async function initializeConnection() {
     try {
         await connection.start();
         console.log("SignalR Connected");
+        currentConnectionId = connection.connectionId;
     } catch (err) {
         console.error("SignalR Connection Error:", err);
         showError("Failed to connect to game server. Please refresh the page.");
@@ -234,6 +252,35 @@ function enableJoinControls() {
     document.getElementById('leaveRoomBtn').classList.add('hidden');
 }
 
+function showRoundsSelector() {
+    const selector = document.getElementById('roundsSelector');
+    const lobbyRoundsInput = document.getElementById('lobbyRounds');
+    
+    if (currentConnectionId === roomCreatorId && gameState?.state === 0) {
+        selector.classList.remove('hidden');
+        lobbyRoundsInput.value = totalRounds;
+    } else {
+        selector.classList.add('hidden');
+    }
+}
+
+async function setRounds() {
+    const roundsInput = document.getElementById('lobbyRounds');
+    const rounds = parseInt(roundsInput.value, 10);
+
+    if (Number.isNaN(rounds) || rounds < 1) {
+        showError("Please enter a valid number of rounds");
+        return;
+    }
+
+    try {
+        await connection.invoke("UpdateRounds", currentRoomId, rounds);
+    } catch (err) {
+        console.error("Error setting rounds:", err);
+        showError(err.message || "Failed to set rounds");
+    }
+}
+
 async function leaveRoom() {
     const roomIdToLeave = currentRoomId;
     
@@ -249,6 +296,7 @@ async function leaveRoom() {
     // Reset state
     hasJoinedRoom = false;
     currentRoomId = '';
+    roomCreatorId = '';
     currentPlayer = {
         hand: [],
         isCardCzar: false,
@@ -257,6 +305,11 @@ async function leaveRoom() {
     };
     gameState = null;
     roundNumber = 1;
+    totalRounds = 7;
+    updateRoundDisplay();
+    
+    // Hide rounds selector
+    document.getElementById('roundsSelector').classList.add('hidden');
     
     // Re-enable controls
     enableJoinControls();
@@ -390,6 +443,20 @@ function updateGameDisplay() {
     // Update game state specific UI
     updateGameStateUI();
     updateSubmitButtonState();
+}
+
+function updateRoundDisplay() {
+    const roundNumberEl = document.getElementById('roundNumber');
+    const totalRoundsEl = document.getElementById('totalRoundsDisplay');
+    const roundLabelEl = document.getElementById('roundLabel');
+
+    if (gameState && gameState.isDeciderRound) {
+        roundLabelEl.innerHTML = '⚡ DECIDER ROUND ⚡';
+    } else {
+        roundLabelEl.innerHTML = `Round: <span id="roundNumber">${roundNumber}</span> / <span id="totalRoundsDisplay">${totalRounds}</span>`;
+        roundNumberEl.textContent = roundNumber;
+        totalRoundsEl.textContent = totalRounds;
+    }
 }
 
 function renderPlayers() {
