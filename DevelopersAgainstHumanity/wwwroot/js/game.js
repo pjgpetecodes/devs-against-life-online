@@ -98,9 +98,9 @@ function updateLobbyStatus(playerCount, playerNames) {
     
     // Show list of player names
     if (playerNames && playerNames.length > 0) {
-        message += '<ul style="list-style: none; padding: 10px 0; text-align: left;">';
+        message += '<ul class="lobby-player-list">';
         playerNames.forEach(name => {
-            message += `<li style="padding: 5px 0;">👤 ${name}</li>`;
+            message += `<li>👤 ${name}</li>`;
         });
         message += '</ul>';
     }
@@ -128,16 +128,7 @@ function showLobbyStatus(message) {
 
 function showPlayerJoinedMessage(playerName) {
     const messageDiv = document.createElement('div');
-    messageDiv.style.cssText = `
-        background: rgba(40, 167, 69, 0.3);
-        border-left: 4px solid #28a745;
-        color: #fff;
-        padding: 12px 20px;
-        border-radius: 8px;
-        margin: 10px 0;
-        text-align: center;
-        animation: slideIn 0.5s ease;
-    `;
+    messageDiv.className = 'player-join-notification';
     messageDiv.textContent = `${playerName} joined the room!`;
     
     const lobbyStatus = document.getElementById('lobbyStatus');
