@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="white-cards.txt" CopyToOutputDirectory="Always" />
-    <None Update="black-cards.txt" CopyToOutputDirectory="Always" />
+    <None Update="../white-cards.txt" CopyToOutputDirectory="Always" />
+    <None Update="../black-cards.txt" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>
