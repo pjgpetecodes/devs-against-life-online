@@ -186,14 +186,14 @@ async function joinRoom() {
 function disableJoinControls() {
     document.getElementById('playerName').disabled = true;
     document.getElementById('roomId').disabled = true;
-    document.querySelector('button[onclick="joinRoom()"]').disabled = true;
+    document.getElementById('joinRoomBtn').disabled = true;
     document.getElementById('leaveRoomBtn').classList.remove('hidden');
 }
 
 function enableJoinControls() {
     document.getElementById('playerName').disabled = false;
     document.getElementById('roomId').disabled = false;
-    document.querySelector('button[onclick="joinRoom()"]').disabled = false;
+    document.getElementById('joinRoomBtn').disabled = false;
     document.getElementById('leaveRoomBtn').classList.add('hidden');
 }
 

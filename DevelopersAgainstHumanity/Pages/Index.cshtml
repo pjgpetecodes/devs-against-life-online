@@ -388,8 +388,8 @@
                 <label for="roomId">Room ID:</label>
                 <input type="text" id="roomId" placeholder="Enter or create room ID" />
             </div>
-            <button class="btn-primary" onclick="joinRoom()">Join Room</button>
-            <button id="leaveRoomBtn" class="btn-secondary hidden" onclick="leaveRoom()" style="background: #dc3545;">Leave Room</button>
+            <button id="joinRoomBtn" class="btn-primary" onclick="joinRoom()">Join Room</button>
+            <button id="leaveRoomBtn" class="btn-danger hidden" onclick="leaveRoom()">Leave Room</button>
             <button id="startGameBtn" class="btn-secondary" onclick="startGame()" disabled>Start Game</button>
             <div id="lobbyStatus" style="margin-top: 20px; text-align: center;"></div>
         </div>
