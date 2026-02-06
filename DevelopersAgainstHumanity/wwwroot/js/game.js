@@ -116,6 +116,11 @@ async function joinRoom() {
     try {
         await connection.invoke("JoinRoom", roomId, playerName);
         showLobbyStatus(`Joined room ${roomId}! Waiting for game to start...`);
+        
+        // Enable the Start Game button after joining
+        const startGameBtn = document.getElementById('startGameBtn');
+        startGameBtn.disabled = false;
+        startGameBtn.style.opacity = '1';
     } catch (err) {
         console.error("Error joining room:", err);
         showError("Failed to join room");
@@ -288,10 +293,12 @@ function updateGameStateUI() {
             }
             break;
         case 2: // Judging
-            showStatus("Card Czar is selecting the winner...");
             if (currentPlayer.isCardCzar) {
-                renderSubmittedCards();
+                showStatus("You are the Card Czar! Select the funniest card.");
+            } else {
+                showStatus("Card Czar is selecting the winner...");
             }
+            renderSubmittedCards();
             break;
         case 3: // RoundOver
             const winner = gameState.players.find(p => p.connectionId === gameState.winningPlayerId);
@@ -312,9 +319,17 @@ function updateGameStateUI() {
 function renderSubmittedCards() {
     const section = document.getElementById('submittedCardsSection');
     const container = document.getElementById('submittedCardsContainer');
+    const title = document.getElementById('submittedCardsTitle');
     
     section.classList.remove('hidden');
     container.innerHTML = '';
+    
+    // Set title based on whether current player is card czar
+    if (currentPlayer.isCardCzar) {
+        title.textContent = 'Select the Winner:';
+    } else {
+        title.textContent = 'Submitted Cards:';
+    }
 
     Object.entries(gameState.submittedCards).forEach(([playerId, cardId]) => {
         const player = gameState.players.find(p => p.connectionId === playerId);
@@ -324,7 +339,15 @@ function renderSubmittedCards() {
             const cardDiv = document.createElement('div');
             cardDiv.className = 'card white-card mini-card';
             cardDiv.textContent = card.text;
-            cardDiv.onclick = () => selectWinner(playerId);
+            
+            // Only Card Czar can click to select winner
+            if (currentPlayer.isCardCzar) {
+                cardDiv.onclick = () => selectWinner(playerId);
+                cardDiv.style.cursor = 'pointer';
+            } else {
+                cardDiv.style.cursor = 'default';
+            }
+            
             container.appendChild(cardDiv);
         }
     });

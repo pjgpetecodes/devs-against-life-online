@@ -81,12 +81,17 @@
             margin-top: 10px;
         }
 
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5 !important;
+        }
+
         .btn-primary {
             background: #28a745;
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: #218838;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
@@ -97,7 +102,7 @@
             color: white;
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: #0056b3;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
@@ -320,6 +325,16 @@
 
         <!-- Lobby Screen -->
         <div id="lobby">
+            <div style="margin-bottom: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+                <h2 style="font-size: 1.3rem; margin-bottom: 10px;">How to Play:</h2>
+                <ol style="line-height: 1.8; padding-left: 20px;">
+                    <li>Enter your name</li>
+                    <li>Create a new room by entering a unique Room ID, or join an existing room</li>
+                    <li>Click "Join Room" to enter the game lobby</li>
+                    <li>Wait for at least 3 players to join</li>
+                    <li>Click "Start Game" to begin playing</li>
+                </ol>
+            </div>
             <div class="input-group">
                 <label for="playerName">Your Name:</label>
                 <input type="text" id="playerName" placeholder="Enter your name" />
@@ -329,7 +344,7 @@
                 <input type="text" id="roomId" placeholder="Enter or create room ID" />
             </div>
             <button class="btn-primary" onclick="joinRoom()">Join Room</button>
-            <button class="btn-secondary" onclick="startGame()">Start Game</button>
+            <button id="startGameBtn" class="btn-secondary" onclick="startGame()" disabled style="opacity: 0.5;">Start Game</button>
             <div id="lobbyStatus" style="margin-top: 20px; text-align: center;"></div>
         </div>
 
@@ -364,9 +379,9 @@
             <!-- Game Over Display -->
             <div id="gameOverDisplay" class="hidden"></div>
 
-            <!-- Submitted Cards (for Card Czar) -->
+            <!-- Submitted Cards -->
             <div id="submittedCardsSection" class="submitted-cards-section hidden">
-                <h2>Select the Winner:</h2>
+                <h2 id="submittedCardsTitle">Submitted Cards:</h2>
                 <div class="submitted-cards-container" id="submittedCardsContainer"></div>
             </div>
 
