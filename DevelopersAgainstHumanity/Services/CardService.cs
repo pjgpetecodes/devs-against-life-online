@@ -28,7 +28,7 @@ public class CardService : ICardService
         try
         {
             // Load black cards
-            var blackCardsPath = Path.Combine(contentRootPath, "..", "black-cards.txt");
+            var blackCardsPath = Path.Combine(contentRootPath, "Data", "black-cards.txt");
             if (File.Exists(blackCardsPath))
             {
                 var lines = File.ReadAllLines(blackCardsPath);
@@ -54,7 +54,7 @@ public class CardService : ICardService
             }
 
             // Load white cards
-            var whiteCardsPath = Path.Combine(contentRootPath, "..", "white-cards.txt");
+            var whiteCardsPath = Path.Combine(contentRootPath, "Data", "white-cards.txt");
             if (File.Exists(whiteCardsPath))
             {
                 var lines = File.ReadAllLines(whiteCardsPath);
