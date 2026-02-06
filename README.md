@@ -23,12 +23,9 @@ An online multiplayer card game inspired by Cards Against Humanity, but tailored
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- .NET 8.0 SDK
-- Azure subscription (for deployment)
-
 ### Running Locally
+
+**Prerequisites**: .NET 8.0 SDK
 
 1. Clone the repository:
 ```bash
@@ -50,7 +47,21 @@ dotnet run
 
 5. To test multiplayer, open multiple browser windows or tabs
 
-## ☁️ Azure Deployment
+### Deploy to Azure
+
+**Prerequisites**: An Azure subscription (get a [free account](https://azure.microsoft.com/free/) with $200 credit)
+
+**Quick deploy**: See [QUICKSTART.md](QUICKSTART.md) for step-by-step instructions
+
+**Summary**:
+1. Login to Azure CLI and create a resource group
+2. Deploy infrastructure with Bicep (creates Web App, App Insights, etc.)
+3. Configure GitHub Actions or deploy directly with Azure CLI
+4. Your game is live!
+
+**Full details**: See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment guide
+
+## ☁️ Azure Deployment Details
 
 ### Deploy Infrastructure
 

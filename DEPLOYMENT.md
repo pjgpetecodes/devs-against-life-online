@@ -1,6 +1,22 @@
 # Deployment Guide
 
-This guide will help you deploy the Developers Against Humanity game to Azure.
+This is the **detailed deployment guide** for Developers Against Humanity.
+
+> **Quick Start**: For streamlined deployment instructions, see [QUICKSTART.md](QUICKSTART.md)
+
+This guide covers:
+- Detailed explanation of Azure resources
+- Multiple deployment options
+- Advanced configuration
+- Monitoring and troubleshooting
+- Scaling and optimization
+
+## Overview
+
+To deploy this application to Azure, you need:
+- An Azure subscription
+- Azure CLI installed
+- (Optional) GitHub account for automated deployments
 
 ## Prerequisites
 

@@ -1,333 +1,304 @@
-# Quick Start: Deploy to Existing Azure Web App
+# Quick Start: Deploy to Your Azure Subscription
 
-This guide helps you deploy Developers Against Humanity to an **existing** Azure Web App that you already have.
+This guide helps you deploy Developers Against Humanity to your **existing Azure subscription**. The deployment will automatically create all necessary resources (Web App, App Service Plan, Application Insights, etc.).
 
-> **New to Azure?** If you don't have an Azure Web App yet, see [DEPLOYMENT.md](DEPLOYMENT.md) for instructions on creating new infrastructure.
+> **Don't have Azure yet?** Get a [free Azure account](https://azure.microsoft.com/free/) with $200 credit.
 
-## Prerequisites
+## What You Need
 
-Before you begin, ensure you have:
+- ✅ An Azure subscription (that's it!)
+- ✅ Azure CLI installed ([Download](https://docs.microsoft.com/cli/azure/install-azure-cli))
+- ✅ This repository forked/cloned to your GitHub account
 
-- ✅ An existing Azure Web App (App Service)
-- ✅ Access to the Azure Portal or Azure CLI
-- ✅ A GitHub account with this repository forked/cloned
-- ✅ .NET 8.0 runtime configured on your Web App
+## What Gets Created
 
-## Quick Steps Overview
+The deployment automatically creates:
+- **App Service Plan** (B1 tier - ~$13/month, or free with credits)
+- **Web App** (ASP.NET Core 8.0 with WebSockets enabled)
+- **Application Insights** (for monitoring and diagnostics)
+- **Log Analytics Workspace** (for logs)
 
-1. **Configure your Azure Web App** (enable WebSockets)
-2. **Get your publish profile** from Azure
-3. **Configure GitHub Actions** with the publish profile
-4. **Deploy** by pushing to your repository
+## Quick Deploy: Two Options
 
----
-
-## Step 1: Configure Your Azure Web App
-
-### Enable WebSockets (Required for SignalR)
-
-SignalR requires WebSockets to be enabled on your Azure Web App.
-
-#### Option A: Azure Portal
-
-1. Open [Azure Portal](https://portal.azure.com)
-2. Navigate to your App Service
-3. Go to **Settings** > **Configuration**
-4. Click the **General settings** tab
-5. Set **Web sockets** to **On**
-6. Click **Save**
-
-#### Option B: Azure CLI
-
-```bash
-az webapp config set \
-  --name YOUR-WEBAPP-NAME \
-  --resource-group YOUR-RESOURCE-GROUP \
-  --web-sockets-enabled true
-```
-
-### Verify .NET Runtime
-
-Ensure your Web App is configured for .NET 8:
-
-#### Azure Portal
-1. Go to **Settings** > **Configuration** > **General settings**
-2. Set **Stack** to **.NET**
-3. Set **Major version** to **.NET 8 (LTS)**
-4. Click **Save**
-
-#### Azure CLI
-```bash
-az webapp config show \
-  --name YOUR-WEBAPP-NAME \
-  --resource-group YOUR-RESOURCE-GROUP \
-  --query linuxFxVersion
-```
+Choose your preferred deployment method:
+- **Option A**: Automated with GitHub Actions (recommended for continuous deployment)
+- **Option B**: Direct deployment with Azure CLI (fastest for one-time setup)
 
 ---
 
-## Step 2: Get Your Publish Profile
+## 🚀 Option A: GitHub Actions (Recommended)
 
-The publish profile contains credentials needed for deployment.
+Best for continuous deployment - every push automatically deploys!
 
-### Download from Azure Portal
-
-1. Go to your App Service in Azure Portal
-2. Click **Deployment Center** in the left menu
-3. Click **Manage publish profile**
-4. Click **Download publish profile**
-5. Save the `.PublishSettings` file (you'll need its contents)
-
-### Using Azure CLI
+### Step 1: Deploy Azure Infrastructure
 
 ```bash
+# Login to Azure
+az login
+
+# Create a resource group
+az group create \
+  --name dev-against-humanity-rg \
+  --location eastus
+
+# Deploy the infrastructure (creates Web App, App Insights, etc.)
+az deployment group create \
+  --resource-group dev-against-humanity-rg \
+  --template-file infrastructure/main.bicep
+```
+
+**Note the output** - you'll see your web app name (like `dev-against-humanity-abc123`).
+
+### Step 2: Get Publish Profile
+
+```bash
+# Replace with your actual web app name from step 1
 az webapp deployment list-publishing-profiles \
   --name YOUR-WEBAPP-NAME \
-  --resource-group YOUR-RESOURCE-GROUP \
-  --xml
+  --resource-group dev-against-humanity-rg \
+  --xml > publish-profile.xml
 ```
 
-Copy the entire XML output - this is your publish profile.
-
----
-
-## Step 3: Configure GitHub Actions
-
-### Add Publish Profile to GitHub Secrets
+### Step 3: Configure GitHub Actions
 
 1. Go to your GitHub repository
-2. Click **Settings** > **Secrets and variables** > **Actions**
+2. Navigate to **Settings** > **Secrets and variables** > **Actions**
 3. Click **New repository secret**
 4. Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
-5. Value: Paste the **entire contents** of your publish profile file
+5. Value: Paste contents of `publish-profile.xml` file
 6. Click **Add secret**
 
-### Update Workflow Configuration
+### Step 4: Update Workflow File
 
-Edit `.github/workflows/azure-deploy.yml`:
-
-1. Find line 10: `AZURE_WEBAPP_NAME: 'dev-against-humanity'`
-2. Replace `'dev-against-humanity'` with **your Azure Web App name**
-3. Example: `AZURE_WEBAPP_NAME: 'my-existing-webapp'`
+Edit `.github/workflows/azure-deploy.yml`, line 10:
 
 ```yaml
 env:
-  AZURE_WEBAPP_NAME: 'your-webapp-name-here'  # ← Change this
+  AZURE_WEBAPP_NAME: 'your-webapp-name-here'  # ← Change to your web app name
   AZURE_WEBAPP_PACKAGE_PATH: './DevelopersAgainstHumanity'
   DOTNET_VERSION: '8.0.x'
 ```
 
-4. Save and commit the change:
+Commit and push:
 
 ```bash
 git add .github/workflows/azure-deploy.yml
-git commit -m "Configure deployment for existing Azure Web App"
+git commit -m "Configure Azure deployment"
 git push origin main
 ```
 
----
+### Step 5: Deploy!
 
-## Step 4: Deploy
-
-### Option A: Automatic Deployment (Recommended)
-
-Once configured, the app automatically deploys when you push to the `main` branch:
+Push to main branch triggers automatic deployment:
 
 ```bash
 git push origin main
 ```
 
-### Option B: Manual Workflow Trigger
-
-1. Go to your GitHub repository
-2. Click **Actions** tab
-3. Select **Build and Deploy to Azure** workflow
-4. Click **Run workflow** button
-5. Select branch (usually `main`)
-6. Click **Run workflow**
-
-### Monitor Deployment
-
-1. In GitHub, go to **Actions** tab
-2. Click on the running workflow
-3. Watch the build and deploy steps
-4. Deployment usually takes 2-5 minutes
+Watch deployment progress in GitHub **Actions** tab (takes 2-5 minutes).
 
 ---
 
-## Step 5: Verify Deployment
+## ⚡ Option B: Direct Azure CLI Deploy
 
-1. **Check deployment status**: Wait for GitHub Action to show ✅ success
-2. **Visit your app**: Go to `https://YOUR-WEBAPP-NAME.azurewebsites.net`
-3. **Test the game**:
-   - You should see the game lobby
-   - Enter a player name and room ID
-   - Click "Join Room"
-   - Open another browser tab/window and join the same room
-   - Click "Start Game" (needs 3+ players)
+Fastest way to deploy once - no GitHub Actions needed.
 
-### Troubleshooting
-
-If you don't see the game:
-
-1. **Check Application Logs**:
-   ```bash
-   az webapp log tail \
-     --name YOUR-WEBAPP-NAME \
-     --resource-group YOUR-RESOURCE-GROUP
-   ```
-
-2. **Verify WebSockets**: Make sure WebSockets are enabled (Step 1)
-
-3. **Check Browser Console**: Press F12 and look for JavaScript errors
-
-4. **Verify cards loaded**: Check logs for "Loaded X black cards" message
-
----
-
-## Alternative Deployment Methods
-
-### Deploy via Azure CLI
-
-If you prefer not to use GitHub Actions:
+### Deploy Infrastructure
 
 ```bash
-# Navigate to project directory
+# Login to Azure
+az login
+
+# Create resource group
+az group create \
+  --name dev-against-humanity-rg \
+  --location eastus
+
+# Deploy infrastructure
+az deployment group create \
+  --resource-group dev-against-humanity-rg \
+  --template-file infrastructure/main.bicep
+```
+
+Note your web app name from the output.
+
+### Build and Deploy Application
+
+```bash
+# Navigate to application folder
 cd DevelopersAgainstHumanity
 
-# Build and publish
+# Publish the application
 dotnet publish -c Release -o ./publish
 
-# Create deployment package
+# Create deployment zip
 cd publish
 zip -r ../deploy.zip .
 cd ..
 
-# Deploy to Azure
+# Deploy to Azure (replace YOUR-WEBAPP-NAME)
 az webapp deployment source config-zip \
   --name YOUR-WEBAPP-NAME \
-  --resource-group YOUR-RESOURCE-GROUP \
+  --resource-group dev-against-humanity-rg \
   --src deploy.zip
-```
 
-### Deploy via VS Code
-
-1. Install the [Azure App Service extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureappservice)
-2. Open the project in VS Code
-3. Click the Azure icon in the sidebar
-4. Right-click your Web App under **App Services**
-5. Select **Deploy to Web App...**
-6. Choose the `DevelopersAgainstHumanity` folder
-7. Confirm deployment
-
-### Deploy via Visual Studio
-
-1. Open `DevelopersAgainstHumanity.sln`
-2. Right-click the `DevelopersAgainstHumanity` project
-3. Select **Publish...**
-4. Choose **Azure** as target
-5. Select **Azure App Service (Windows)** or **Azure App Service (Linux)**
-6. Select your existing Web App
-7. Click **Publish**
-
----
-
-## Configuration & Customization
-
-### Environment Variables
-
-To add environment variables (e.g., API keys):
-
-```bash
-az webapp config appsettings set \
-  --name YOUR-WEBAPP-NAME \
-  --resource-group YOUR-RESOURCE-GROUP \
-  --settings KEY1=value1 KEY2=value2
-```
-
-### Custom Cards
-
-To customize the game cards:
-
-1. Edit `black-cards.txt` (questions/prompts)
-2. Edit `white-cards.txt` (answers)
-3. Commit and push changes
-4. Automatic deployment will update the cards
-
-### Scale Your App
-
-If you need more performance:
-
-```bash
-# Scale up (more CPU/memory)
-az appservice plan update \
-  --name YOUR-APP-SERVICE-PLAN \
-  --resource-group YOUR-RESOURCE-GROUP \
-  --sku S1
-
-# Scale out (more instances)
-az appservice plan update \
-  --name YOUR-APP-SERVICE-PLAN \
-  --resource-group YOUR-RESOURCE-GROUP \
-  --number-of-workers 2
+# Clean up
+cd ..
+rm -f DevelopersAgainstHumanity/deploy.zip
+rm -rf DevelopersAgainstHumanity/publish
 ```
 
 ---
 
-## Monitoring Your Deployment
+## ✅ Verify Deployment
+
+1. **Get your URL**:
+   ```bash
+   az webapp show \
+     --name YOUR-WEBAPP-NAME \
+     --resource-group dev-against-humanity-rg \
+     --query defaultHostName \
+     --output tsv
+   ```
+
+2. **Open in browser**: `https://YOUR-WEBAPP-NAME.azurewebsites.net`
+
+3. **Test the game**:
+   - Enter a player name and room ID
+   - Click "Join Room"
+   - Open 2 more browser tabs, join same room
+   - Click "Start Game" (needs 3+ players)
+   - Play a round!
+
+---
+
+## 📊 Monitor Your App
 
 ### View Live Logs
 
 ```bash
 az webapp log tail \
   --name YOUR-WEBAPP-NAME \
-  --resource-group YOUR-RESOURCE-GROUP
+  --resource-group dev-against-humanity-rg
 ```
 
-### Enable Application Insights (Optional)
+### View Application Insights
 
-If your Web App doesn't have Application Insights:
-
-1. Go to your App Service in Azure Portal
-2. Click **Application Insights** in left menu
-3. Click **Turn on Application Insights**
-4. Create new or select existing Application Insights resource
-5. Click **Apply**
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Navigate to your resource group: `dev-against-humanity-rg`
+3. Click on the Application Insights resource
+4. Explore **Live Metrics** for real-time monitoring
 
 ---
 
-## Security Checklist
+## 🔧 Common Tasks
 
-Before going live:
+### Update Card Content
 
-- ✅ HTTPS is enabled (should be automatic)
-- ✅ WebSockets are enabled
-- ✅ Publish profile secret is secure in GitHub
-- ✅ App Service authentication configured (if needed)
-- ✅ CORS configured (if serving from different domain)
+1. Edit `black-cards.txt` or `white-cards.txt`
+2. Commit and push (if using GitHub Actions)
+   ```bash
+   git add black-cards.txt white-cards.txt
+   git commit -m "Update cards"
+   git push origin main
+   ```
+3. Or redeploy manually (Option B steps)
+
+### Scale Your Application
+
+```bash
+# Get your App Service Plan name
+az appservice plan list \
+  --resource-group dev-against-humanity-rg \
+  --query "[0].name" \
+  --output tsv
+
+# Scale up (more powerful instance)
+az appservice plan update \
+  --name YOUR-PLAN-NAME \
+  --resource-group dev-against-humanity-rg \
+  --sku S1
+
+# Scale out (more instances for more players)
+az appservice plan update \
+  --name YOUR-PLAN-NAME \
+  --resource-group dev-against-humanity-rg \
+  --number-of-workers 2
+```
+
+### Delete Everything
+
+When you're done:
+
+```bash
+az group delete \
+  --name dev-against-humanity-rg \
+  --yes \
+  --no-wait
+```
 
 ---
 
-## Need Help?
+## 🐛 Troubleshooting
 
-- **Documentation**: See [README.md](README.md) for game overview
-- **Full deployment guide**: See [DEPLOYMENT.md](DEPLOYMENT.md) for creating new infrastructure
-- **Local testing**: See [LOCAL-TESTING.md](LOCAL-TESTING.md) for development setup
-- **Security**: See [SECURITY.md](SECURITY.md) for security considerations
-- **Issues**: Open an issue on GitHub
+### "Web app not found"
+- Check the web app name is correct (from deployment output)
+- Verify resource group name: `dev-against-humanity-rg`
+
+### "Cards not loading"
+- Ensure `black-cards.txt` and `white-cards.txt` are in repository root
+- Check deployment logs: `az webapp log tail...`
+
+### "SignalR connection failed"
+- WebSockets should be enabled automatically by Bicep template
+- Verify with: 
+  ```bash
+  az webapp config show \
+    --name YOUR-WEBAPP-NAME \
+    --resource-group dev-against-humanity-rg \
+    --query webSocketsEnabled
+  ```
+
+### Deployment fails
+- Check GitHub Actions logs (Actions tab)
+- Verify publish profile secret is correct
+- Check Azure CLI: `az webapp deployment list-publishing-credentials`
 
 ---
 
-## Summary
+## 💰 Cost Estimate
 
-**You're all set!** 🎉
+With free Azure credits:
+- **B1 Basic tier**: ~$13/month (or free with $200 credit)
+- **Application Insights**: First 5GB free monthly
+- **Total**: $13/month or less
 
-Your deployment process:
-1. ✅ Configured Azure Web App (WebSockets enabled)
-2. ✅ Added publish profile to GitHub Secrets
-3. ✅ Updated workflow with your Web App name
-4. ✅ Pushed to GitHub → Automatic deployment
+To minimize costs:
+- Use free tier while testing (in `main.bicep`, change SKU to `F1`)
+- Delete resources when not in use: `az group delete`
+- Set up budget alerts in Azure Portal
 
-**Next time**: Just push code changes to trigger automatic deployment!
+---
 
-**To play**: Visit `https://YOUR-WEBAPP-NAME.azurewebsites.net`
+## 📚 Additional Resources
+
+- **Full deployment guide**: [DEPLOYMENT.md](DEPLOYMENT.md) - detailed instructions
+- **Local testing**: [LOCAL-TESTING.md](LOCAL-TESTING.md) - run locally
+- **Security**: [SECURITY.md](SECURITY.md) - security considerations
+- **Game rules**: [README.md](README.md) - how to play
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) - add cards, features
+
+---
+
+## 🎉 You're Done!
+
+Your game is now live at: `https://YOUR-WEBAPP-NAME.azurewebsites.net`
+
+**Share the URL** with your team and start playing! 🎮
+
+**Next steps**:
+- Customize the cards for your team
+- Set up a custom domain
+- Add more features (see [CONTRIBUTING.md](CONTRIBUTING.md))
+
+Need help? Open an issue on GitHub!
