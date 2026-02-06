@@ -1,0 +1,391 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Developers Against Humanity";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developers Against Humanity</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Lobby Styles */
+        #lobby {
+            max-width: 600px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-secondary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+
+        /* Game Board Styles */
+        #gameBoard {
+            display: none;
+        }
+
+        .game-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-info {
+            font-size: 1.2rem;
+        }
+
+        .players-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .player-card.czar {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .player-card.winner {
+            animation: pulse 1s infinite;
+        }
+
+        @@keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Black Card */
+        .black-card-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .card {
+            width: 300px;
+            height: 400px;
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        .black-card {
+            background: #000;
+            color: #fff;
+        }
+
+        .white-card {
+            background: #fff;
+            color: #000;
+        }
+
+        .white-card.selected {
+            border: 5px solid #28a745;
+            box-shadow: 0 0 20px rgba(40, 167, 69, 0.6);
+        }
+
+        .white-card.submitted {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Hand Section */
+        .hand-section {
+            margin-top: 40px;
+        }
+
+        .hand-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+        }
+
+        .cards-container::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .cards-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .mini-card {
+            min-width: 200px;
+            height: 280px;
+            flex-shrink: 0;
+        }
+
+        /* Submitted Cards Section */
+        .submitted-cards-section {
+            margin: 30px 0;
+        }
+
+        .submitted-cards-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Status Messages */
+        #statusMessage {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Winner Display */
+        .winner-display {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            border-radius: 20px;
+            margin: 30px 0;
+            font-size: 2rem;
+            font-weight: bold;
+            animation: slideIn 0.5s ease;
+        }
+
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-over {
+            text-align: center;
+            padding: 60px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-radius: 20px;
+            margin: 30px 0;
+        }
+
+        .game-over h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Developers Against Humanity 🎮</h1>
+
+        <!-- Lobby Screen -->
+        <div id="lobby">
+            <div class="input-group">
+                <label for="playerName">Your Name:</label>
+                <input type="text" id="playerName" placeholder="Enter your name" />
+            </div>
+            <div class="input-group">
+                <label for="roomId">Room ID:</label>
+                <input type="text" id="roomId" placeholder="Enter or create room ID" />
+            </div>
+            <button class="btn-primary" onclick="joinRoom()">Join Room</button>
+            <button class="btn-secondary" onclick="startGame()">Start Game</button>
+            <div id="lobbyStatus" style="margin-top: 20px; text-align: center;"></div>
+        </div>
+
+        <!-- Game Board -->
+        <div id="gameBoard">
+            <!-- Game Header -->
+            <div class="game-header">
+                <div class="game-info">
+                    Room: <span id="roomIdDisplay"></span>
+                </div>
+                <div class="game-info">
+                    Round: <span id="roundNumber">1</span>
+                </div>
+            </div>
+
+            <!-- Players -->
+            <div class="players-section" id="playersContainer"></div>
+
+            <!-- Status Message -->
+            <div id="statusMessage"></div>
+
+            <!-- Black Card -->
+            <div class="black-card-container">
+                <div class="card black-card" id="blackCard">
+                    Waiting for game to start...
+                </div>
+            </div>
+
+            <!-- Winner Display -->
+            <div id="winnerDisplay" class="hidden"></div>
+
+            <!-- Game Over Display -->
+            <div id="gameOverDisplay" class="hidden"></div>
+
+            <!-- Submitted Cards (for Card Czar) -->
+            <div id="submittedCardsSection" class="submitted-cards-section hidden">
+                <h2>Select the Winner:</h2>
+                <div class="submitted-cards-container" id="submittedCardsContainer"></div>
+            </div>
+
+            <!-- Player's Hand -->
+            <div class="hand-section">
+                <h2>Your Hand</h2>
+                <div class="cards-container" id="handContainer">
+                    <p style="color: #fff;">Waiting for cards...</p>
+                </div>
+            </div>
+
+            <!-- Next Round Button -->
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="nextRoundBtn" class="btn-primary hidden" onclick="nextRound()">Next Round</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.0/dist/browser/signalr.min.js"></script>
+    <script src="~/js/game.js"></script>
+</body>
+</html>
