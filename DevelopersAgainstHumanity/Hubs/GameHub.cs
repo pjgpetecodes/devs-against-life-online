@@ -19,6 +19,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             _gameService.CreateRoom(roomId, totalRounds);
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
             await Clients.Caller.SendAsync("RoomCreated", roomId);
@@ -35,6 +36,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             var room = _gameService.GetRoom(roomId);
             if (room == null)
                 throw new InvalidOperationException("Room not found");
@@ -63,6 +65,12 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
+            playerName = playerName?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(playerName))
+                throw new InvalidOperationException("Player name is required");
+
             var room = _gameService.GetRoom(roomId);
             if (room == null)
             {
@@ -94,6 +102,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             _gameService.StartGame(roomId);
             var room = _gameService.GetRoom(roomId);
             
@@ -122,6 +131,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             _gameService.SubmitCards(roomId, Context.ConnectionId, cardIds);
             var room = _gameService.GetRoom(roomId);
             
@@ -141,6 +151,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             _gameService.SelectWinner(roomId, winnerId);
             var room = _gameService.GetRoom(roomId);
             
@@ -160,6 +171,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             _gameService.NextRound(roomId);
             var room = _gameService.GetRoom(roomId);
             
@@ -188,6 +200,7 @@ public class GameHub : Hub
     {
         try
         {
+            roomId = NormalizeRoomId(roomId);
             var room = _gameService.GetRoom(roomId);
             if (room != null)
             {
@@ -229,5 +242,22 @@ public class GameHub : Hub
         }
         
         await base.OnDisconnectedAsync(exception);
+    }
+
+    private static string NormalizeRoomId(string roomId)
+    {
+        if (string.IsNullOrWhiteSpace(roomId))
+            throw new InvalidOperationException("Room ID is required");
+
+        var trimmed = roomId.Trim();
+        if (int.TryParse(trimmed, out var numeric) && numeric < 0)
+            throw new InvalidOperationException("Room ID cannot be a negative number");
+
+        return trimmed;
+    }
+
+    public async Task NotifyRoomDeleted(string roomId)
+    {
+        await Clients.Group(roomId).SendAsync("RoomDeleted", "This room has been deleted by an admin.");
     }
 }

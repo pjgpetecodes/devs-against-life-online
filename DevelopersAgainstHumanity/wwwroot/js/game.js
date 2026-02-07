@@ -81,6 +81,7 @@ async function initializeConnection() {
         console.log("Game started!");
         document.getElementById('lobby').style.display = 'none';
         document.getElementById('gameBoard').style.display = 'block';
+        updateWelcomeHeader();
         showStatus("Game started! Get ready to play!");
     });
 
@@ -107,11 +108,47 @@ async function initializeConnection() {
         hideWinnerDisplay();
         hideNextRoundButton();
         updateRoundDisplay();
+        updateWelcomeHeader();
     });
 
     connection.on("Error", (message) => {
         console.error("Error:", message);
         showError(message);
+    });
+
+    connection.on("RoomDeleted", (message) => {
+        console.log("Room deleted:", message);
+        console.log("Current room ID:", currentRoomId);
+        console.log("Has joined room:", hasJoinedRoom);
+        showError(message);
+        // Reset game state and return to lobby/join screen
+        setTimeout(() => {
+            // Clear room state
+            hasJoinedRoom = false;
+            currentRoomId = '';
+            currentPlayerName = '';
+            roomCreatorId = '';
+            currentPlayer = {
+                hand: [],
+                isCardCzar: false,
+                selectedCards: [],
+                hasSubmitted: false
+            };
+            gameState = null;
+            roundNumber = 1;
+            totalRounds = 7;
+            hasPromptedRounds = false;
+            
+            // Reset UI
+            document.getElementById('gameBoard').style.display = 'none';
+            document.getElementById('lobby').style.display = 'block';
+            document.getElementById('lobbyStatus').innerHTML = '';
+            document.getElementById('roundsSelector').classList.add('hidden');
+            closeRoundsModal();
+            document.getElementById('shareLinkSection').classList.add('hidden');
+            updateWelcomeHeader();
+            enableJoinControls();
+        }, 2000);
     });
 
     // Start connection
@@ -216,6 +253,25 @@ function showError(message) {
     setTimeout(() => errorDiv.remove(), 5000);
 }
 
+function isNegativeRoomId(roomId) {
+    const numeric = Number(roomId);
+    return Number.isFinite(numeric) && numeric < 0;
+}
+
+function validateRoomId(roomId) {
+    if (!roomId) {
+        showError("Please enter a room ID");
+        return false;
+    }
+
+    if (isNegativeRoomId(roomId)) {
+        showError("Room ID cannot be a negative number");
+        return false;
+    }
+
+    return true;
+}
+
 async function joinRoom() {
     const playerName = document.getElementById('playerName').value.trim();
     const roomId = document.getElementById('roomId').value.trim();
@@ -225,8 +281,7 @@ async function joinRoom() {
         return;
     }
 
-    if (!roomId) {
-        showError("Please enter a room ID");
+    if (!validateRoomId(roomId)) {
         return;
     }
 
@@ -491,6 +546,7 @@ function updateGameDisplay() {
     // Update game state specific UI
     updateGameStateUI();
     updateSubmitButtonState();
+    updateWelcomeHeader();
 }
 
 function updateRoundDisplay() {
@@ -754,6 +810,16 @@ function checkUrlForRoom() {
     const roomId = urlParams.get('room');
     
     if (roomId) {
+        if (isNegativeRoomId(roomId)) {
+            joinedViaLink = false;
+            document.getElementById('roomId').value = '';
+            document.getElementById('playerName').parentElement.classList.remove('hidden');
+            document.getElementById('roomId').parentElement.classList.remove('hidden');
+            document.getElementById('joinRoomBtn').classList.remove('hidden');
+            showError("Room ID cannot be a negative number");
+            return;
+        }
+
         joinedViaLink = true;
         document.getElementById('roomId').value = roomId;
         document.getElementById('playerName').parentElement.classList.add('hidden');
@@ -849,7 +915,18 @@ function updateWelcomeHeader() {
         const playerCount = gameState?.players?.length || 0;
         const playerNameToShow = currentPlayerName || document.getElementById('playerName').value.trim();
         
-        welcomeHeader.innerHTML = `Welcome <strong>${playerNameToShow}</strong> to Room <strong>${currentRoomId}</strong> | Players in room: <strong>${playerCount}</strong>`;
+        let html = `Welcome <strong>${playerNameToShow}</strong> to Room <strong>${currentRoomId}</strong> | Players in room: <strong>${playerCount}</strong>`;
+        
+        // Add round info if game is active
+        if (gameState && gameState.state !== 0) { // Not in lobby
+            if (gameState.isDeciderRound) {
+                html += `<div class="round-info">⚡ DECIDER ROUND ⚡</div>`;
+            } else {
+                html += `<div class="round-info">Round: ${roundNumber} / ${totalRounds}</div>`;
+            }
+        }
+        
+        welcomeHeader.innerHTML = html;
         welcomeHeader.classList.remove('hidden');
     } else {
         welcomeHeader.classList.add('hidden');

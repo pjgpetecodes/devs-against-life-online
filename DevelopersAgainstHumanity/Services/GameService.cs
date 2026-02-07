@@ -12,6 +12,10 @@ public interface IGameService
     void SubmitCards(string roomId, string playerId, List<string> cardIds);
     void SelectWinner(string roomId, string winnerId);
     void NextRound(string roomId);
+    int ClearRooms();
+    IEnumerable<GameRoom> GetAllRooms();
+    bool DeleteRoom(string roomId);
+    IEnumerable<string> GetAllRoomIds();
 }
 
 public class GameService : IGameService
@@ -27,8 +31,22 @@ public class GameService : IGameService
         _logger = logger;
     }
 
+    private static string NormalizeRoomId(string roomId)
+    {
+        if (string.IsNullOrWhiteSpace(roomId))
+            throw new InvalidOperationException("Room ID is required");
+
+        var trimmed = roomId.Trim();
+        if (int.TryParse(trimmed, out var numeric) && numeric < 0)
+            throw new InvalidOperationException("Room ID cannot be a negative number");
+
+        return trimmed;
+    }
+
     public GameRoom CreateRoom(string roomId, int? totalRounds = null)
     {
+        roomId = NormalizeRoomId(roomId);
+
         if (_rooms.ContainsKey(roomId))
         {
             return _rooms[roomId];
@@ -295,5 +313,34 @@ public class GameService : IGameService
         room.IsDeciderRound = false;
         
         StartRound(room);
+    }
+
+    public int ClearRooms()
+    {
+        var cleared = _rooms.Count;
+        _rooms.Clear();
+        _logger.LogWarning("All rooms cleared by admin. Cleared {RoomCount} room(s).", cleared);
+        return cleared;
+    }
+
+    public IEnumerable<string> GetAllRoomIds()
+    {
+        return _rooms.Keys.ToList();
+    }
+
+    public IEnumerable<GameRoom> GetAllRooms()
+    {
+        return _rooms.Values.ToList();
+    }
+
+    public bool DeleteRoom(string roomId)
+    {
+        roomId = NormalizeRoomId(roomId);
+        if (_rooms.Remove(roomId))
+        {
+            _logger.LogWarning("Room {RoomId} deleted by admin.", roomId);
+            return true;
+        }
+        return false;
     }
 }
