@@ -36,7 +36,7 @@ Feature requests are welcome! Please:
 
 4. **Test your changes**
    ```bash
-   cd DevelopersAgainstHumanity
+   cd DevsAgainstLife
    dotnet build
    dotnet run
    ```
@@ -74,7 +74,7 @@ Feature requests are welcome! Please:
 ## Project Structure
 
 ```
-DevelopersAgainstHumanity/
+DevsAgainstLife/
 ├── Hubs/              # SignalR hubs
 ├── Models/            # Data models
 ├── Services/          # Business logic

@@ -87,7 +87,7 @@ az deployment group create \
 
 ### Deploy Code (Direct)
 ```bash
-cd DevelopersAgainstHumanity
+cd DevsAgainstLife
 dotnet publish -c Release -o ./publish
 cd publish && zip -r ../deploy.zip . && cd ..
 az webapp deployment source config-zip \
@@ -98,7 +98,7 @@ az webapp deployment source config-zip \
 
 ### Run Locally
 ```bash
-cd DevelopersAgainstHumanity
+cd DevsAgainstLife
 dotnet run
 # Open https://localhost:5001
 ```

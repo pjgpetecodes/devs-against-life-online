@@ -55,7 +55,7 @@ az deployment group create \
 
 **Option A - Quick (Direct Deploy)**:
 ```bash
-cd DevelopersAgainstHumanity
+cd DevsAgainstLife
 dotnet publish -c Release -o ./publish
 cd publish
 zip -r ../deploy.zip .

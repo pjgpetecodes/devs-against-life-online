@@ -75,7 +75,7 @@ Edit `.github/workflows/azure-deploy.yml`, line 10:
 ```yaml
 env:
   AZURE_WEBAPP_NAME: 'your-webapp-name-here'  # ← Change to your web app name
-  AZURE_WEBAPP_PACKAGE_PATH: './DevelopersAgainstHumanity'
+  AZURE_WEBAPP_PACKAGE_PATH: './DevsAgainstLife'
   DOTNET_VERSION: '8.0.x'
 ```
 
@@ -126,7 +126,7 @@ Note your web app name from the output.
 
 ```bash
 # Navigate to application folder
-cd DevelopersAgainstHumanity
+cd DevsAgainstLife
 
 # Publish the application
 dotnet publish -c Release -o ./publish
@@ -144,8 +144,8 @@ az webapp deployment source config-zip \
 
 # Clean up
 cd ..
-rm -f DevelopersAgainstHumanity/deploy.zip
-rm -rf DevelopersAgainstHumanity/publish
+rm -f DevsAgainstLife/deploy.zip
+rm -rf DevsAgainstLife/publish
 ```
 
 ---

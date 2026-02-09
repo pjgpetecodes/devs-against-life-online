@@ -3,6 +3,10 @@
         "/^dotnet build$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd c:\\\\repos\\\\devs-against-life-online\\\\DevsAgainstLife; mv DevelopersAgainstHumanity\\.csproj DevsAgainstLife\\.csproj$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

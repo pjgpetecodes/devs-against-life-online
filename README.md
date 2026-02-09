@@ -35,7 +35,7 @@ cd developers-against-humanity-online
 
 2. Navigate to the application directory:
 ```bash
-cd DevelopersAgainstHumanity
+cd DevsAgainstLife
 ```
 
 3. Run the application:
@@ -124,7 +124,7 @@ docker push your-registry/developers-against-humanity
 
 ```
 .
-├── DevelopersAgainstHumanity/
+├── DevsAgainstLife/
 │   ├── Hubs/                  # SignalR hubs
 │   ├── Models/                # Game models (Player, Card, GameRoom)
 │   ├── Services/              # Business logic (CardService, GameService)
