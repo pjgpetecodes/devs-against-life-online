@@ -360,9 +360,18 @@ public class GameService : IGameService
     public bool DeleteRoom(string roomId)
     {
         roomId = NormalizeRoomId(roomId);
-        if (_rooms.Remove(roomId))
+        if (_rooms.Remove(roomId, out var room))
         {
-            _logger.LogWarning("Room {RoomId} deleted by admin.", roomId);
+            // Clear room state for proper cleanup
+            room.Players.Clear();
+            room.SubmittedCards.Clear();
+            room.CurrentBlackCard = null;
+            room.CurrentRound = 0;
+            room.WinningPlayerId = null;
+            room.State = GameState.Lobby;
+            room.TotalRounds = 7; // Reset to default
+            
+            _logger.LogWarning("Room {RoomId} deleted by admin or timeout.", roomId);
             return true;
         }
         return false;

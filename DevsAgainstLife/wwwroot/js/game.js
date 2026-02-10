@@ -973,7 +973,7 @@ function updateShareLink() {
     const shareLinkSection = document.getElementById('shareLinkSection');
     const shareLinkInput = document.getElementById('shareLinkInput');
     
-    if (currentConnectionId === roomCreatorId && currentRoomId && gameState?.state === 0) {
+    if (currentRoomId && gameState?.state === 0) {
         const shareUrl = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}`;
         shareLinkInput.value = shareUrl;
         shareLinkSection.classList.remove('hidden');
