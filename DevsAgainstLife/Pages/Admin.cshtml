@@ -280,11 +280,102 @@
             opacity: 0.5;
             pointer-events: none;
         }
+
+        /* Tab Styles */
+        .tabs-header {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tab-button.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-bottom-color: #00d4ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block !important;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .card-editor-section {
+            margin-bottom: 30px;
+        }
+
+        .card-editor-label {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+            flex: 1;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
     </style>
 </head>
 <body>
     <div class="admin-container">
-        <h1>Admin - Room Maintenance</h1>
+        <h1>Admin Panel</h1>
         
         <!-- Key Verification Section -->
         <div class="key-verification" id="keyVerification">
@@ -301,6 +392,15 @@
         
         <!-- All content wrapped in a container that gets hidden until key is verified -->
         <div id="adminContent" class="hidden">
+        
+        <!-- Tabs Header -->
+        <div class="tabs-header">
+            <button class="tab-button active" onclick="switchTab('rooms')">🏠 Room Admin</button>
+            <button class="tab-button" onclick="switchTab('cards')">🎴 Card Admin</button>
+        </div>
+
+        <!-- Room Admin Tab -->
+        <div id="rooms-tab" class="tab-content active">
         
         <!-- Clear All Rooms Section -->
         <div class="control-section">
@@ -325,11 +425,45 @@
         </div>
         
         </div>
+
+        <!-- Card Admin Tab -->
+        <div id="cards-tab" class="tab-content hidden">
+        
+        <div class="control-section">
+            <h2>Manage Cards</h2>
+            <p class="admin-control-p">Edit black and white cards. Changes persist in your browser and survive app restarts. Click "Reset to Default" to revert to original cards.</p>
+            
+            <div class="card-editor-section">
+                <label class="card-editor-label">Black Cards (one per line, use ____ for blanks being filled):</label>
+                <textarea id="blackCardsTextarea" placeholder="Black card text goes here..."></textarea>
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="saveBlackCards()">Save Black Cards</button>
+                    <button class="btn btn-warning" onclick="resetBlackCards()">Reset to Default</button>
+                </div>
+                <div id="blackCardsStatus" class="status-message"></div>
+            </div>
+            
+            <div class="card-editor-section">
+                <label class="card-editor-label">White Cards (one per line):</label>
+                <textarea id="whiteCardsTextarea" placeholder="White card text goes here..."></textarea>
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="saveWhiteCards()">Save White Cards</button>
+                    <button class="btn btn-warning" onclick="resetWhiteCards()">Reset to Default</button>
+                </div>
+                <div id="whiteCardsStatus" class="status-message"></div>
+            </div>
+        </div>
+        
+        </div>
+        
+        </div>
     </div>
 
     <script>
         const adminKeyInput = document.getElementById('adminKey');
         let adminKeyVerified = false;
+        let originalBlackCards = '';
+        let originalWhiteCards = '';
 
         // Allow Enter key to verify
         adminKeyInput.addEventListener('keypress', (e) => {
@@ -337,6 +471,120 @@
                 verifyAdminKey();
             }
         });
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Mark the clicked button as active
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            // Load cards when switching to cards tab
+            if (tabName === 'cards' && !originalBlackCards) {
+                loadCardsForEditing();
+            }
+        }
+
+        async function loadCardsForEditing() {
+            try {
+                const response = await fetch(`/admin/cards?key=${encodeURIComponent(adminKeyInput.value)}`);
+                if (!response.ok) throw new Error('Failed to load cards');
+                
+                const data = await response.json();
+                
+                // Format black cards with pick count
+                const blackCardsText = data.blackCards.map(c => c.text).join('\n');
+                const whiteCardsText = data.whiteCards.map(c => c.text).join('\n');
+                
+                // Store originals
+                originalBlackCards = blackCardsText;
+                originalWhiteCards = whiteCardsText;
+                
+                // Set localStorage
+                localStorage.setItem('dal_blackCards_original', blackCardsText);
+                localStorage.setItem('dal_whiteCards_original', whiteCardsText);
+                
+                // Load any overrides from localStorage
+                const savedBlackCards = localStorage.getItem('dal_blackCards');
+                const savedWhiteCards = localStorage.getItem('dal_whiteCards');
+                
+                document.getElementById('blackCardsTextarea').value = savedBlackCards || blackCardsText;
+                document.getElementById('whiteCardsTextarea').value = savedWhiteCards || whiteCardsText;
+            } catch (err) {
+                console.error('Error loading cards:', err);
+                showStatus('blackCardsStatus', 'Error loading cards', 'error');
+            }
+        }
+
+        async function saveBlackCards() {
+            const blackCardsText = document.getElementById('blackCardsTextarea').value;
+            const whiteCardsText = document.getElementById('whiteCardsTextarea').value;
+            
+            const blackCards = blackCardsText.split('\n')
+                .filter(line => line.trim())
+                .map(text => ({
+                    text: text.trim(),
+                    pickCount: (text.match(/_+/g) || []).length || 1
+                }));
+            
+            const whiteCards = whiteCardsText.split('\n')
+                .filter(line => line.trim())
+                .map(text => ({ text: text.trim() }));
+            
+            try {
+                const response = await fetch(`/admin/cards?key=${encodeURIComponent(adminKeyInput.value)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ blackCards, whiteCards })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save cards');
+                
+                const result = await response.json();
+                
+                // Save to localStorage
+                localStorage.setItem('dal_blackCards', blackCardsText);
+                localStorage.setItem('dal_whiteCards', whiteCardsText);
+                
+                showStatus('blackCardsStatus', `Saved ${result.blackCount} black cards!`, 'success');
+            } catch (err) {
+                console.error('Error saving black cards:', err);
+                showStatus('blackCardsStatus', 'Error saving cards', 'error');
+            }
+        }
+
+        async function saveWhiteCards() {
+            // Save as part of black cards to maintain consistency
+            await saveBlackCards();
+        }
+
+        function resetBlackCards() {
+            if (originalBlackCards && confirm('Reset black cards to defaults?')) {
+                document.getElementById('blackCardsTextarea').value = originalBlackCards;
+                localStorage.removeItem('dal_blackCards');
+                showStatus('blackCardsStatus', 'Reset to defaults (not saved)', 'success');
+            }
+        }
+
+        function resetWhiteCards() {
+            if (originalWhiteCards && confirm('Reset white cards to defaults?')) {
+                document.getElementById('whiteCardsTextarea').value = originalWhiteCards;
+                localStorage.removeItem('dal_whiteCards');
+                showStatus('whiteCardsStatus', 'Reset to defaults (not saved)', 'success');
+            }
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status-message ${type}`;
+            element.style.display = 'block';
+            setTimeout(() => element.style.display = 'none', 3000);
+        }
 
         function hideStatusMessageAfterDelay(statusElement, delay = 3000) {
             setTimeout(() => {

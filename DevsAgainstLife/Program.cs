@@ -104,4 +104,70 @@ app.MapPost("/admin/rooms/{roomId}/delete", async (string roomId, HttpContext co
     return deleted ? Results.Ok(new { deleted = true }) : Results.NotFound();
 });
 
+// Card management endpoints
+app.MapGet("/admin/cards", (HttpContext context, ICardService cardService, IConfiguration configuration) =>
+{
+    var adminKey = configuration["AdminKey"];
+    var providedKey = context.Request.Query["key"].ToString();
+
+    if (!string.IsNullOrWhiteSpace(adminKey) && adminKey != providedKey)
+    {
+        return Results.Unauthorized();
+    }
+
+    var blackCards = cardService.GetBlackCards();
+    var whiteCards = cardService.GetWhiteCards();
+
+    return Results.Ok(new
+    {
+        blackCards = blackCards.Select(c => new { text = c.Text, pickCount = c.PickCount }).ToList(),
+        whiteCards = whiteCards.Select(c => new { text = c.Text }).ToList()
+    });
+});
+
+app.MapPost("/admin/cards", async (HttpContext context, ICardService cardService, IConfiguration configuration) =>
+{
+    var adminKey = configuration["AdminKey"];
+    var providedKey = context.Request.Query["key"].ToString();
+
+    if (!string.IsNullOrWhiteSpace(adminKey) && adminKey != providedKey)
+    {
+        return Results.Unauthorized();
+    }
+
+    var request = await context.Request.ReadFromJsonAsync<CardUpdateRequest>();
+    if (request == null)
+    {
+        return Results.BadRequest("Invalid request body");
+    }
+
+    var blackCards = request.BlackCards.Select(c => new DevsAgainstLife.Models.BlackCard
+    {
+        Text = c.Text,
+        PickCount = c.PickCount > 0 ? c.PickCount : 1
+    }).ToList();
+
+    var whiteCards = request.WhiteCards.Select(c => new DevsAgainstLife.Models.WhiteCard
+    {
+        Text = c.Text
+    }).ToList();
+
+    cardService.SetBlackCards(blackCards);
+    cardService.SetWhiteCards(whiteCards);
+
+    return Results.Ok(new { blackCount = blackCards.Count, whiteCount = whiteCards.Count });
+});
+
 app.Run();
+
+public class CardUpdateRequest
+{
+    public List<CardData> BlackCards { get; set; } = new();
+    public List<CardData> WhiteCards { get; set; } = new();
+}
+
+public class CardData
+{
+    public string Text { get; set; } = string.Empty;
+    public int PickCount { get; set; } = 1;
+}

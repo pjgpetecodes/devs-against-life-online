@@ -8,6 +8,8 @@ public interface ICardService
     List<WhiteCard> GetWhiteCards();
     BlackCard GetRandomBlackCard();
     WhiteCard GetRandomWhiteCard();
+    void SetBlackCards(List<BlackCard> cards);
+    void SetWhiteCards(List<WhiteCard> cards);
 }
 
 public class CardService : ICardService
@@ -99,5 +101,19 @@ public class CardService : ICardService
             throw new InvalidOperationException("No white cards available");
         
         return _whiteCards[_random.Next(_whiteCards.Count)];
+    }
+
+    public void SetBlackCards(List<BlackCard> cards)
+    {
+        _blackCards.Clear();
+        _blackCards.AddRange(cards);
+        _logger.LogInformation($"Updated {_blackCards.Count} black cards");
+    }
+
+    public void SetWhiteCards(List<WhiteCard> cards)
+    {
+        _whiteCards.Clear();
+        _whiteCards.AddRange(cards);
+        _logger.LogInformation($"Updated {_whiteCards.Count} white cards");
     }
 }

@@ -103,6 +103,19 @@ body {
   background-clip: text;
   filter: drop-shadow(0 0 8px rgba(106, 0, 255, 0.3));
   animation: gradientShift 8s ease infinite;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .navbar-brand-fancy {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand-fancy {
+    font-size: 1.5rem;
+  }
 }
 
 @keyframes gradientShift {
