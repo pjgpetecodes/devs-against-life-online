@@ -296,7 +296,7 @@ The PM who schedules meetings at 9 AM
 Morning standups
 The developer in a different timezone
 Asynchronous communication
-Slack at 2 AM
+Teams at 2 AM
 Being on-call
 PagerDuty alerts
 Getting paged at 3 AM
@@ -383,3 +383,7 @@ Drinking beer during calls
 Our backlog is full
 That's not our definition of done
 The acceptance criteria suck
+Microsoft Teams
+GitHub Copilot hallunications
+My prompt-fu sucks
+We've had a new MD more often than a payrise

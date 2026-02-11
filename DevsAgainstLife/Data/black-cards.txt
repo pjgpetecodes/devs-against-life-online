@@ -38,3 +38,5 @@ I blame _____ for my complete lack of focus today.
 My excuse for not paying attention in the meeting was _____.
 I accomplished nothing today because _____.
 I turned off my notifications when _____.
+The reason user story didn't get moved to closed was _____.
+It take 9 months to release new features when _____.
