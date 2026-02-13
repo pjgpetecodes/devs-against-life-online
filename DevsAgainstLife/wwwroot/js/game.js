@@ -76,10 +76,13 @@ async function initializeConnection() {
             // If game is active (not in lobby), show game board
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('gameBoard').style.display = 'block';
+            document.body.classList.add('in-game');
             
-            // Make header compact when game is active
+            // Hide main header and show small logo during gameplay
             const header = document.getElementById('gameHeader');
-            if (header) header.classList.add('compact');
+            if (header) header.style.display = 'none';
+            const logo = document.getElementById('gameLogo');
+            if (logo) logo.classList.remove('hidden');
             
             // Extract current player's data from game state (needed when rejoining mid-game)
             const currentPlayerData = state.players.find(p => p.connectionId === connection.connectionId);
@@ -111,10 +114,13 @@ async function initializeConnection() {
         console.log("Game started!");
         document.getElementById('lobby').style.display = 'none';
         document.getElementById('gameBoard').style.display = 'block';
+        document.body.classList.add('in-game');
         
-        // Make header compact when game starts
+        // Hide main header and show small logo during gameplay
         const header = document.getElementById('gameHeader');
-        if (header) header.classList.add('compact');
+        if (header) header.style.display = 'none';
+        const logo = document.getElementById('gameLogo');
+        if (logo) logo.classList.remove('hidden');
         
         updateWelcomeHeader();
         showStatus("Game started! Get ready to play!");
@@ -294,10 +300,13 @@ async function initializeConnection() {
         closeAllModals();
         document.getElementById('lobby').style.display = 'block';
         document.getElementById('gameBoard').style.display = 'none';
+        document.body.classList.remove('in-game');
         
-        // Expand header when returning to lobby
+        // Show header and hide logo when returning to lobby
         const header = document.getElementById('gameHeader');
-        if (header) header.classList.remove('compact');
+        if (header) header.style.display = '';
+        const logo = document.getElementById('gameLogo');
+        if (logo) logo.classList.add('hidden');
         
         showStatus("Returning to lobby to wait for more players...");
     });
@@ -811,6 +820,13 @@ async function leaveRoom() {
     document.getElementById('lobbyStatus').innerHTML = '';
     document.getElementById('startGameBtn').disabled = true;
     updateWelcomeHeader();
+    document.body.classList.remove('in-game');
+
+    // Show header and hide logo when leaving room
+    const header = document.getElementById('gameHeader');
+    if (header) header.style.display = '';
+    const logo = document.getElementById('gameLogo');
+    if (logo) logo.classList.add('hidden');
     
     console.log("Left room");
 }

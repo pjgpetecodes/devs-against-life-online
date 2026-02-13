@@ -2,6 +2,7 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Devs Against Life";
+    ViewData["BodyClass"] = "game-page";
 }
 
 <!DOCTYPE html>
@@ -24,6 +25,11 @@
 
     <!-- Notification Area -->
     <div id="notificationArea" class="notification-area"></div>
+
+    <!-- Small Game Logo (shown during gameplay) -->
+    <div id="gameLogo" class="game-logo hidden">
+        💻 Devs Against Life 💻
+    </div>
 
     <div class="container">
 
