@@ -77,6 +77,10 @@ async function initializeConnection() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('gameBoard').style.display = 'block';
             
+            // Make header compact when game is active
+            const header = document.getElementById('gameHeader');
+            if (header) header.classList.add('compact');
+            
             // Extract current player's data from game state (needed when rejoining mid-game)
             const currentPlayerData = state.players.find(p => p.connectionId === connection.connectionId);
             if (currentPlayerData) {
@@ -107,6 +111,11 @@ async function initializeConnection() {
         console.log("Game started!");
         document.getElementById('lobby').style.display = 'none';
         document.getElementById('gameBoard').style.display = 'block';
+        
+        // Make header compact when game starts
+        const header = document.getElementById('gameHeader');
+        if (header) header.classList.add('compact');
+        
         updateWelcomeHeader();
         showStatus("Game started! Get ready to play!");
     });
@@ -285,6 +294,11 @@ async function initializeConnection() {
         closeAllModals();
         document.getElementById('lobby').style.display = 'block';
         document.getElementById('gameBoard').style.display = 'none';
+        
+        // Expand header when returning to lobby
+        const header = document.getElementById('gameHeader');
+        if (header) header.classList.remove('compact');
+        
         showStatus("Returning to lobby to wait for more players...");
     });
 

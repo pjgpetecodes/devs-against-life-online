@@ -6,7 +6,7 @@ public interface IGameService
 {
     GameRoom CreateRoom(string roomId, int? totalRounds = null);
     GameRoom? GetRoom(string roomId);
-    Player AddPlayer(string roomId, string connectionId, string playerName);
+    Player AddPlayer(string roomId, string connectionId, string playerName, bool allowRejoin = false);
     void RemovePlayer(string roomId, string connectionId);
     void StartGame(string roomId);
     void SubmitCards(string roomId, string playerId, List<string> cardIds);
@@ -71,7 +71,7 @@ public class GameService : IGameService
         return _rooms.GetValueOrDefault(roomId);
     }
 
-    public Player AddPlayer(string roomId, string connectionId, string playerName)
+    public Player AddPlayer(string roomId, string connectionId, string playerName, bool allowRejoin = false)
     {
         var room = GetRoom(roomId);
         if (room == null)
@@ -100,7 +100,7 @@ public class GameService : IGameService
         }
 
         // New player trying to join
-        if (room.State != GameState.Lobby)
+        if (room.State != GameState.Lobby && !allowRejoin)
             throw new InvalidOperationException("Cannot join: Game has already started");
 
         if (room.Players.Count >= room.MaxPlayers)

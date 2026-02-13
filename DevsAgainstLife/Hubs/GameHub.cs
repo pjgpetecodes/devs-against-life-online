@@ -83,35 +83,31 @@ public class GameHub : Hub
             if (room == null)
                 throw new InvalidOperationException("Failed to create or get room");
 
+            // Check if this is a valid rejoin (player who left mid-game trying to return)
+            bool isRejoin = room.State != GameState.Lobby 
+                         && room.IsWaitingForPlayerReturn 
+                         && playerName == room.PlayerWhoLeftName;
+
             // Game already in progress - only allow if player is the one who left and is rejoining
-            if (room.State != GameState.Lobby)
+            if (room.State != GameState.Lobby && !isRejoin)
             {
-                if (!room.IsWaitingForPlayerReturn || playerName != room.PlayerWhoLeftName)
-                {
-                    throw new InvalidOperationException("Cannot join a game that has already started.");
-                }
+                throw new InvalidOperationException("Cannot join a game that has already started.");
             }
 
             // Check if this player was removed from the game
             if (room.RemovedPlayerConnectionIds.Contains(Context.ConnectionId))
                 throw new InvalidOperationException("You were removed from this game and cannot rejoin");
 
-            var player = _gameService.AddPlayer(roomId, Context.ConnectionId, playerName);
+            var player = _gameService.AddPlayer(roomId, Context.ConnectionId, playerName, isRejoin);
             await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
             
-            // If player rejoins while waiting for them, clear the waiting state
-            _logger.LogInformation($"Checking if player {playerName} is the one who left. PlayerWhoLeftName: {room.PlayerWhoLeftName}, CurrentPlayerName: {playerName}");
-            
-            if (room.PlayerWhoLeftName == playerName)
+            // If player rejoins while waiting for them, clear the waiting state and notify others
+            if (isRejoin)
             {
                 _logger.LogInformation($"Player {playerName} is rejoining! Sending PlayerRejoinedMidGame event to room {roomId}");
                 room.PlayerWhoLeftName = null;
                 room.IsWaitingForPlayerReturn = false;
                 await Clients.Group(roomId).SendAsync("PlayerRejoinedMidGame", player.Name);
-            }
-            else
-            {
-                _logger.LogInformation($"Player {playerName} is NOT the one who left. PlayerWhoLeftName was: {room.PlayerWhoLeftName}");
             }
             
             // Notify all players in the room
@@ -246,8 +242,9 @@ public class GameHub : Hub
                         room.PlayerWhoLeftName = player.Name;
                         room.IsWaitingForPlayerReturn = true; // Lock room to new players
                         
-                        // Remove them from the player list so original player can rejoin
-                        _gameService.RemovePlayer(roomId, Context.ConnectionId);
+                        // Don't remove player from room - keep their hand and state for rejoin
+                        // Just remove them from the SignalR group
+                        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
                         
                         // Check if enough players remain
                         int remainingPlayers = room.Players.Count;
@@ -512,8 +509,8 @@ public class GameHub : Hub
                         room.PlayerWhoLeftName = player.Name;
                         room.IsWaitingForPlayerReturn = true; // Lock room to new players
                         
-                        // Remove them from the player list so original player can rejoin
-                        _gameService.RemovePlayer(room.RoomId, Context.ConnectionId);
+                        // Don't remove player from room - keep their hand and state for rejoin
+                        // The player object stays in the room with their current connection ID
                         
                         // Check if enough players remain
                         int remainingPlayers = room.Players.Count;
