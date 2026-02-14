@@ -1360,11 +1360,18 @@ function updateBlackCardWithSelection() {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-    // Get selected cards text
+    // Get selected cards text for the currently controlled player
     const selectedAnswers = [];
-    if (!currentPlayer.hasSubmitted && currentPlayer.selectedCards.length > 0) {
-        currentPlayer.selectedCards.forEach(cardId => {
-            const card = currentPlayer.hand?.find(c => c.id === cardId);
+    const controlledPlayer = gameState?.players?.find(p => p.connectionId === currentConnectionId);
+    const controlledHand = controlledPlayer?.hand || currentPlayer.hand || [];
+    const submittedCardIds = gameState?.submittedCards?.[currentConnectionId] || [];
+    const selectedCardIds = currentPlayer.selectedCards.length > 0
+        ? currentPlayer.selectedCards
+        : submittedCardIds;
+
+    if (selectedCardIds.length > 0) {
+        selectedCardIds.forEach(cardId => {
+            const card = controlledHand.find(c => c.id === cardId);
             if (card) selectedAnswers.push(card.text);
         });
     }

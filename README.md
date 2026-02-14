@@ -191,18 +191,18 @@ docker push your-registry/developers-against-humanity
 │   ├── Services/              # Business logic (CardService, GameService)
 │   ├── Pages/                 # Razor pages
 │   └── wwwroot/               # Static files (CSS, JS)
+│   └── Data/                  # Card data files (black, white, takedowns)
 ├── infrastructure/            # Azure Bicep templates
-├── .github/workflows/         # CI/CD pipelines
-├── black-cards.txt           # Black card prompts
-└── white-cards.txt           # White card responses
+└── .github/workflows/         # CI/CD pipelines
 ```
 
 ## 🎨 Customizing Cards
 
 You can customize the game by editing the card files:
 
-- `black-cards.txt`: Question/prompt cards (one per line)
-- `white-cards.txt`: Answer cards (one per line)
+- `DevsAgainstLife/Data/black-cards.txt`: Question/prompt cards (one per line)
+- `DevsAgainstLife/Data/white-cards.txt`: Answer cards (one per line)
+- `DevsAgainstLife/Data/takedowns.txt`: Snarky takedown messages (one per line)
 
 The game automatically loads these files on startup.
 
