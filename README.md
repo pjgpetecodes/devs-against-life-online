@@ -47,7 +47,68 @@ dotnet run
 
 5. To test multiplayer, open multiple browser windows or tabs
 
-### Deploy to Azure
+### Local Testing with Demo Mode
+
+**Demo Mode** lets you test the entire game flow with simulated AI players without needing multiple real players.
+
+#### Enabling Demo Mode
+
+Demo mode is automatically activated when you start a room with the name "Pete" (case-insensitive). Simply:
+
+1. Run the app: `dotnet run`
+2. Enter your name as **"Pete"** when prompted
+3. Click "Create Room" → Demo mode activates automatically
+4. You'll see a blue **"🎮 Demo Player Switcher"** panel on the right
+
+#### Using Demo Mode
+
+The demo panel allows you to:
+
+**Add Test Players**:
+- Click the "+ Add Player" buttons to add simulated players (up to 10 total)
+- Each test player is assigned a diverse, randomly-selected name
+- Test players automatically play cards and participate in rounds
+
+**Switch Player Perspectives**:
+- Click any player name in the switcher to control that player
+- You become that player for all actions (submitting cards, selecting winners)
+- The active player is highlighted in yellow
+- Useful for testing different game states and flows
+
+**Collapse the Panel**:
+- Click the panel header to minimize/maximize it
+- Minimized state is remembered between page refreshes
+
+#### Demo Mode Features
+
+- ✅ Add up to 10 simulated players to any room
+- ✅ Switch perspectives between players instantly
+- ✅ Test card selection and submission flows
+- ✅ Test the Card Czar's winner selection process
+- ✅ Observe real-time game state updates
+- ✅ Play through complete game rounds
+- ✅ All game logic works identically to multiplayer mode
+
+#### Example Demo Session
+
+1. Start app, create room as "Pete" → Demo mode activates
+2. Add 3 test players (Carlos, Maya, Diego)
+3. Start the game
+4. Switch to Carlos → Select a card → Submit
+5. Switch to Maya → Select a card → Submit
+6. Switch to Diego → Select a card → Submit
+7. Switch back to Pete → See all submitted cards
+8. If Pete is Card Czar, click a card group to select the winner
+9. Next round begins automatically
+
+#### Why Demo Mode is Useful
+
+- **Solo Testing**: Test complex game flows without needing multiple people
+- **Debugging**: Quickly reproduce specific game states
+- **Feature Validation**: Verify new card types, game rules, and UI changes
+- **Performance Testing**: Load test with multiple players on one machine
+
+
 
 **Have an Azure subscription?** → Start here: **[What you need to deploy](AZURE-DEPLOY-SUMMARY.md)**
 
