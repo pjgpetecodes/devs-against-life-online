@@ -535,6 +535,8 @@ button:disabled {
   box-shadow: 0 8px 20px rgba(0,0,0,0.5);
   cursor: pointer;
   transition: all 0.3s ease;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .card:hover {
@@ -559,7 +561,8 @@ button:disabled {
 .white-card {
   background: #fff;
   color: #000;
-  width: 170px;
+  width: 100%;
+  height: 100%;
 }
 
 .white-card.selected {
@@ -592,7 +595,7 @@ button:disabled {
   align-items: flex-start;
   position: relative;
   min-height: 240px;
-  width: 100%;
+  max-width: 100%;
   flex-wrap: nowrap;
 }
 
@@ -622,6 +625,38 @@ button:disabled {
 .mini-card:hover ~ .mini-card,
 .mini-card.expanded ~ .mini-card {
   margin-left: -30px;
+}
+
+/* Mobile: Horizontal scroll container */
+@media (max-width: 768px) {
+  .cards-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: 220px;
+    padding: 15px 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mini-card {
+    width: 150px;
+    height: 200px;
+    margin-left: 0;
+  }
+
+  .mini-card:first-child {
+    margin-left: 0;
+  }
+
+  .mini-card:hover,
+  .mini-card.expanded {
+    width: 150px;
+    margin-left: 0;
+  }
+
+  .mini-card:hover ~ .mini-card,
+  .mini-card.expanded ~ .mini-card {
+    margin-left: 0;
+  }
 }
 
 /* Submitted Cards Section */
