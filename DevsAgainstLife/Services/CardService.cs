@@ -18,7 +18,6 @@ public class CardService : ICardService
     private readonly List<BlackCard> _blackCards = new();
     private readonly List<WhiteCard> _whiteCards = new();
     private readonly List<string> _takedowns = new();
-    private readonly Random _random = new();
     private readonly ILogger<CardService> _logger;
 
     public CardService(IWebHostEnvironment environment, ILogger<CardService> logger)
@@ -113,7 +112,7 @@ public class CardService : ICardService
         if (_blackCards.Count == 0)
             throw new InvalidOperationException("No black cards available");
         
-        return _blackCards[_random.Next(_blackCards.Count)];
+        return _blackCards[Random.Shared.Next(_blackCards.Count)];
     }
 
     public WhiteCard GetRandomWhiteCard()
@@ -121,7 +120,7 @@ public class CardService : ICardService
         if (_whiteCards.Count == 0)
             throw new InvalidOperationException("No white cards available");
         
-        return _whiteCards[_random.Next(_whiteCards.Count)];
+        return _whiteCards[Random.Shared.Next(_whiteCards.Count)];
     }
 
     public string GetRandomTakedown()
@@ -129,7 +128,7 @@ public class CardService : ICardService
         if (_takedowns.Count == 0)
             return "Your code is... let's just say it's unique.";
         
-        return _takedowns[_random.Next(_takedowns.Count)];
+        return _takedowns[Random.Shared.Next(_takedowns.Count)];
     }
 
     public void SetBlackCards(List<BlackCard> cards)
