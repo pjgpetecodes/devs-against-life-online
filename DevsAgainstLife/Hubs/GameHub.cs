@@ -57,6 +57,10 @@ public class GameHub : Hub
             await Clients.Group(roomId).SendAsync("PlayerJoined", playerName, 1, new[] { playerName });
             _logger.LogInformation($"[CreateRoom] Sent PlayerJoined event");
             
+            // Send full game state so client has complete room info
+            await Clients.Group(roomId).SendAsync("GameStateUpdated", room);
+            _logger.LogInformation($"[CreateRoom] Sent GameStateUpdated event");
+            
             _logger.LogInformation($"[CreateRoom] SUCCESS - Room {roomId} created by {playerName}");
         }
         catch (Exception ex)

@@ -54,6 +54,10 @@ async function initializeConnection() {
         console.log("Player joined:", playerName, "Total players:", playerCount);
         showPlayerJoinedMessage(playerName);
         updateLobbyStatus(playerCount, playerNames);
+        // Ensure hasJoinedRoom is set (for regular joinRoom calls that don't get RoomCreated event)
+        if (!hasJoinedRoom && currentRoomId) {
+            hasJoinedRoom = true;
+        }
         updateWelcomeHeader();
     });
 
@@ -552,8 +556,14 @@ function showPlayerLeftMessage(playerName) {
     }, 3000);
 }
 
-function showStatus(message) {
-    document.getElementById('statusMessage').textContent = message;
+function showStatus(message, isWinner = false) {
+    const statusEl = document.getElementById('statusMessage');
+    statusEl.textContent = message;
+    if (isWinner) {
+        statusEl.classList.add('status-winner');
+    } else {
+        statusEl.classList.remove('status-winner');
+    }
 }
 
 function showError(message) {
@@ -729,10 +739,11 @@ async function joinRoom(roomCodeParam = null) {
 
     try {
         currentPlayerName = playerName;
+        // Set the room ID for regular join rooms (server may override if DEMO mode)
+        currentRoomId = roomCode;
         await connection.invoke("JoinRoom", roomCode, playerName);
-        // Don't set currentRoomId here - wait for server to send RoomCreated event
-        // This allows DEMO mode and other special room codes to work correctly
-        // as the server may create a different room than what was requested
+        // RoomCreated event will override currentRoomId if DEMO mode is detected
+        hasJoinedRoom = true;
         disableJoinControls();
         updateWelcomeHeader();
         // The RoomCreated event will set currentRoomId and show the share link
@@ -1007,6 +1018,7 @@ async function submitCard(cardId) {
     renderHand();
     updateBlackCardWithSelection();
     updateSubmitButtonState();
+    updateGameStateUI();
 }
 
 async function submitSelectedCards() {
@@ -1038,6 +1050,7 @@ async function submitSelectedCards() {
         await connection.invoke("SubmitCards", currentRoomId, currentPlayer.selectedCards, currentConnectionId);
         currentPlayer.hasSubmitted = true;
         renderHand();
+        updateGameStateUI();
         updateSubmitButtonState();
         showStatus("Cards submitted! Waiting for other players...");
     } catch (err) {
@@ -1231,7 +1244,15 @@ function updateGameStateUI() {
                 showStatus(`Cards submitted! Waiting for ${playerCount.remaining} out of ${playerCount.total} player${playerCount.total !== 1 ? 's' : ''}...`);
             } else {
                 const pickCount = gameState?.currentBlackCard?.pickCount || 1;
-                if (pickCount > 1) {
+                const selectedCount = currentPlayer.selectedCards.length;
+                
+                if (selectedCount > 0 && selectedCount === pickCount) {
+                    // User has selected the right number of cards but hasn't submitted
+                    showStatus("Click the Submit button to confirm your choice!");
+                } else if (selectedCount > 0 && pickCount > 1) {
+                    // User has selected some cards but needs more
+                    showStatus(`Select ${pickCount - selectedCount} more card${pickCount - selectedCount !== 1 ? 's' : ''}, then click Submit!`);
+                } else if (pickCount > 1) {
                     showStatus(`Select ${pickCount} cards from your hand to play!`);
                 } else {
                     showStatus("Select a card from your hand to play!");
@@ -1261,6 +1282,8 @@ function updateGameStateUI() {
             }
             break;
     }
+
+    updateSubmittedCardsPresentation();
 }
 
 function renderSubmittedCards() {
@@ -1268,7 +1291,7 @@ function renderSubmittedCards() {
     const container = document.getElementById('submittedCardsContainer');
     const title = document.getElementById('submittedCardsTitle');
     
-    section.classList.remove('hidden');
+    section.classList.remove('hidden', 'submitted-cards-collapsed', 'submitted-cards-placeholder');
     container.innerHTML = '';
     
     // Set title based on whether current player is card czar
@@ -1346,19 +1369,93 @@ function updateSubmitButtonState() {
 }
 
 function hideSubmittedCards() {
-    document.getElementById('submittedCardsSection').classList.add('hidden');
+    const section = document.getElementById('submittedCardsSection');
+    if (!section) return;
+
+    section.classList.remove('hidden', 'submitted-cards-placeholder');
+    section.classList.add('submitted-cards-collapsed');
 }
 
-function updateBlackCardWithSelection() {
-    const blackCardEl = document.getElementById('blackCard');
-    if (!blackCardEl || !gameState?.currentBlackCard) return;
+function updateSubmittedCardsPresentation() {
+    const cardsWrapper = document.querySelector('.cards-display-wrapper');
+    const section = document.getElementById('submittedCardsSection');
+    if (!cardsWrapper || !section || !gameState) return;
 
-    const text = gameState.currentBlackCard.text || '';
+    const shouldPlaceholder =
+        gameState.state === 1 && !currentPlayer.isCardCzar && currentPlayer.hasSubmitted;
+
+    if (shouldPlaceholder) {
+        // First set to collapsed (0 width) for animation start state
+        section.classList.remove('hidden', 'submitted-cards-placeholder');
+        section.classList.add('submitted-cards-collapsed');
+        cardsWrapper.classList.add('awaiting-judging');
+        
+        // Use requestAnimationFrame twice to ensure browser paints the collapsed state
+        // before expanding to placeholder state, triggering the smooth animation
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                section.classList.remove('submitted-cards-collapsed');
+                section.classList.add('submitted-cards-placeholder');
+            });
+        });
+    } else if (gameState.state !== 2) {
+        // Remove animation state and hide section completely
+        cardsWrapper.classList.remove('awaiting-judging');
+        section.classList.remove('submitted-cards-collapsed', 'submitted-cards-placeholder');
+        section.classList.add('hidden');
+    } else {
+        // In judging state, keep awaiting-judging for consistent positioning
+        cardsWrapper.classList.add('awaiting-judging');
+    }
+}
+
+function renderBlackCardHtml(text, answers, includeBlankPlaceholders = false) {
     const parts = text.split(/_{2,}/);
     const escapeHtml = (value) => value
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+
+    let html = '';
+
+    if (parts.length > 1) {
+        // Card with blank(s) - split on blanks
+        parts.forEach((part, index) => {
+            let normalizedPart = part;
+            if (index > 0) {
+                const trimmedLeading = part.replace(/^\s+/, '');
+                if (/^[.,!?]/.test(trimmedLeading)) {
+                    normalizedPart = trimmedLeading;
+                } else {
+                    normalizedPart = part.replace(/^\s+/, ' ');
+                }
+            }
+            html += escapeHtml(normalizedPart);
+            
+            // Add answer or blank placeholder
+            if (index < parts.length - 1) {
+                if (index < answers.length) {
+                    html += `<span class="black-card-answer">${escapeHtml(answers[index])}</span>`;
+                } else if (includeBlankPlaceholders) {
+                    html += '<span class="black-card-blank">____</span>';
+                }
+            }
+        });
+    } else if (answers.length > 0) {
+        // No blanks in text - join answers with " / "
+        html += escapeHtml(text);
+        html += ` <span class="black-card-answer">${escapeHtml(answers.join(' / '))}</span>`;
+    } else {
+        // No answers yet
+        html += escapeHtml(text);
+    }
+
+    return html;
+}
+
+function updateBlackCardWithSelection() {
+    const blackCardEl = document.getElementById('blackCard');
+    if (!blackCardEl || !gameState?.currentBlackCard) return;
 
     // Get selected cards text for the currently controlled player
     const selectedAnswers = [];
@@ -1376,42 +1473,9 @@ function updateBlackCardWithSelection() {
         });
     }
 
-    let html = '';
-
-    if (parts.length > 1) {
-        // Multi-blank card
-        parts.forEach((part, index) => {
-            let normalizedPart = part;
-            if (index > 0) {
-                const trimmedLeading = part.replace(/^\s+/, '');
-                if (/^[.,!?]/.test(trimmedLeading)) {
-                    normalizedPart = trimmedLeading;
-                } else {
-                    normalizedPart = part.replace(/^\s+/, ' ');
-                }
-            }
-            html += escapeHtml(normalizedPart);
-            
-            // Add selected answer or blank
-            if (index < parts.length - 1) {
-                if (index < selectedAnswers.length) {
-                    html += `<span class="black-card-answer">${escapeHtml(selectedAnswers[index])}</span>`;
-                } else {
-                    html += '<span class="black-card-blank">____</span>';
-                }
-            }
-        });
-    } else {
-        // Single blank card
-        if (selectedAnswers.length > 0) {
-            html += escapeHtml(text);
-            html += ` <span class="black-card-answer">${escapeHtml(selectedAnswers[0])}</span>`;
-        } else {
-            html += escapeHtml(text);
-        }
-    }
-
-    blackCardEl.innerHTML = html;
+    const text = gameState.currentBlackCard.text || '';
+    const html = renderBlackCardHtml(text, selectedAnswers, true);
+    blackCardEl.innerHTML = `<span class="black-card-text">${html}</span>`;
 }
 
 function renderWinningBlackCard(winnerId) {
@@ -1432,58 +1496,47 @@ function renderWinningBlackCard(winnerId) {
     }
 
     const text = gameState.currentBlackCard.text || '';
-    const parts = text.split(/_{2,}/);
-    const escapeHtml = (value) => value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    let html = '';
-
-    if (parts.length > 1) {
-        parts.forEach((part, index) => {
-            let normalizedPart = part;
-            if (index > 0) {
-                const trimmedLeading = part.replace(/^\s+/, '');
-                if (/^[.,!?]/.test(trimmedLeading)) {
-                    normalizedPart = trimmedLeading;
-                } else {
-                    normalizedPart = part.replace(/^\s+/, ' ');
-                }
-            }
-            html += escapeHtml(normalizedPart);
-            if (index < answers.length) {
-                html += `<span class="black-card-answer">${escapeHtml(answers[index])}</span>`;
-            }
-        });
-    } else if (answers.length > 0) {
-        html += escapeHtml(text);
-        html += ` <span class="black-card-answer">${escapeHtml(answers.join(' / '))}</span>`;
-    } else {
-        html += escapeHtml(text);
-    }
-
+    const html = renderBlackCardHtml(text, answers, false);
     blackCardEl.innerHTML = `<span class="black-card-text">${html}</span>`;
 }
 
 function showWinnerDisplay(winnerName) {
-    const display = document.getElementById('winnerDisplay');
-    display.className = 'winner-display';
-    display.textContent = `🎉 ${winnerName} won this round! 🎉`;
+    showStatus(`🎉 ${winnerName} won this round! 🎉`, true);
 }
 
 function hideWinnerDisplay() {
-    document.getElementById('winnerDisplay').classList.add('hidden');
+    // Winner display now reuses status message, so just remove winner styling
+    const statusMsg = document.getElementById('statusMessage');
+    statusMsg.classList.remove('status-winner');
+    
+    // Remove the next round button if it exists
+    const existingBtn = document.getElementById('nextRoundBtn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
 }
 
 function showNextRoundButton() {
     if (currentPlayer.isCardCzar) {
-        document.getElementById('nextRoundBtn').classList.remove('hidden');
+        const statusMsg = document.getElementById('statusMessage');
+        
+        // Only add button if it doesn't already exist
+        if (!document.getElementById('nextRoundBtn')) {
+            const btn = document.createElement('button');
+            btn.id = 'nextRoundBtn';
+            btn.className = 'btn-primary next-round-btn-inline';
+            btn.textContent = 'Next Round';
+            btn.onclick = nextRound;
+            statusMsg.appendChild(btn);
+        }
     }
 }
 
 function hideNextRoundButton() {
-    document.getElementById('nextRoundBtn').classList.add('hidden');
+    const btn = document.getElementById('nextRoundBtn');
+    if (btn) {
+        btn.remove();
+    }
 }
 
 function showGameOver(winnerName) {
@@ -1646,9 +1699,13 @@ async function confirmNameEntry(roomCode) {
         const joinSucceeded = await joinRoom(roomCode);
         // Only close modal if join was successful
         if (joinSucceeded) {
+            // Ensure welcome header is displayed
+            updateWelcomeHeader();
             closeNameEntryModal();
             nameInput.value = '';
             modalRoomId = null;
+            // Scroll to top so user sees the welcome header
+            setTimeout(() => window.scrollTo(0, 0), 100);
         }
     } else {
         // Fresh start - modal can close

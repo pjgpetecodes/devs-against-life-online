@@ -515,10 +515,43 @@ button:disabled {
   flex: 0 0 auto;
 }
 
+.cards-display-wrapper.awaiting-judging {
+  justify-content: flex-start;
+}
+
+.cards-display-wrapper #submittedCardsSection {
+  transition: max-width 0.4s ease, flex-basis 0.4s ease, opacity 0.2s ease;
+}
+
+.cards-display-wrapper .black-card-container {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
 .cards-display-wrapper .submitted-cards-section {
   flex: 1 1 auto;
   min-width: 300px;
   margin: 0;
+}
+
+.submitted-cards-section.submitted-cards-collapsed {
+  flex-basis: 0;
+  max-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+  transition: flex-basis 0.4s ease, max-width 0.4s ease, opacity 0.2s ease;
+}
+
+.submitted-cards-section.submitted-cards-placeholder {
+  flex-basis: 400px;
+  max-width: 700px;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+  transition: flex-basis 0.4s ease, max-width 0.4s ease, opacity 0.2s ease;
 }
 
 .card {
@@ -750,23 +783,32 @@ button:disabled {
   border-radius: 8px;
   margin: 10px 0;
   font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+#statusMessage.status-winner {
+  padding: 20px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #000;
+  border-radius: 20px;
+  margin: 10px 0;
+  font-size: 2rem;
+  font-weight: bold;
+  animation: slideIn 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.next-round-btn-inline {
+  margin-top: 10px;
+  font-size: 1.2rem;
+  padding: 12px 30px;
 }
 
 .hidden {
   display: none !important;
-}
-
-/* Winner Display */
-.winner-display {
-  text-align: center;
-  padding: 40px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #000;
-  border-radius: 20px;
-  margin: 30px 0;
-  font-size: 2rem;
-  font-weight: bold;
-  animation: slideIn 0.5s ease;
 }
 
 @keyframes slideIn {
