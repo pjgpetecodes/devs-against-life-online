@@ -485,8 +485,17 @@ function showNextRoundButton() {
     // Check if this is the last round or a decider round
     const isLastRound = gameState?.currentRound >= totalRounds;
     const isDecider = gameState?.isDeciderRound;
-    const buttonText = isDecider ? 'Start Decider Round' : (isLastRound ? 'Show Scores' : 'Next Round');
-    const buttonMessage = isDecider ? '⚡ It\'s a tie! Click to play the Decider Round!' : (isLastRound ? 'Click Show Scores to see final standings.' : 'You are the Card Czar! Click Next Round to continue.');
+    
+    // Predict if a decider round will happen (tied scores at end of last round)
+    let willHaveDecider = false;
+    if (isLastRound && !isDecider && gameState?.players) {
+        const topScore = Math.max(...gameState.players.map(p => p.score));
+        const tiedPlayers = gameState.players.filter(p => p.score === topScore);
+        willHaveDecider = tiedPlayers.length > 1;
+    }
+    
+    const buttonText = isDecider ? 'Start Decider Round' : (willHaveDecider ? 'Begin Decider Round' : (isLastRound ? 'Show Scores' : 'Next Round'));
+    const buttonMessage = isDecider ? '⚡ It\'s a tie! Click to play the Decider Round!' : (willHaveDecider ? '⚡ It\'s a tie! Click to play the Decider Round!' : (isLastRound ? 'Click Show Scores to see final standings.' : 'You are the Card Czar! Click Next Round to continue.'));
 
     let btn = document.getElementById('nextRoundBtn');
     if (!btn) {

@@ -65,7 +65,7 @@ function initializeSignalREvents() {
             lobbyEl.style.display = 'block';
         }
 
-        if (headerEl) headerEl.style.display = 'block';
+        if (headerEl) headerEl.style.display = 'none';
         if (logoEl) logoEl.classList.add('hidden');
         document.body.classList.remove('in-game');
         document.body.classList.remove('czar-active');
