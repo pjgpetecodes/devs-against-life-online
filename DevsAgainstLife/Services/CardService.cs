@@ -120,7 +120,10 @@ public class CardService : ICardService
         if (_whiteCards.Count == 0)
             throw new InvalidOperationException("No white cards available");
         
-        return _whiteCards[Random.Shared.Next(_whiteCards.Count)];
+        int randomIndex = Random.Shared.Next(_whiteCards.Count);
+        WhiteCard card = _whiteCards[randomIndex];
+        _whiteCards.RemoveAt(randomIndex);
+        return card;
     }
 
     public string GetRandomTakedown()
