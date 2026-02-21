@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: 'the-dev-branch-ospq4bdlaohjk'
+  AZURE_WEBAPP_NAME: 'the-dev-branch-22bzbaqbibe7m'
   AZURE_WEBAPP_PACKAGE_PATH: './TheDevBranch'
   DOTNET_VERSION: '8.0.x'
 
